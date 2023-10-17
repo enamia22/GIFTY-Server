@@ -10,6 +10,7 @@ app.use(bodyParser.json());
 //import routers
 
 const userRouter = require("./routes/userRoutes");
+const subcategoriesRouter = require("./routes/subcategoriesRoutes");
 
 // connect to database
 mongoDBConnection();
@@ -17,6 +18,7 @@ mongoDBConnection();
 // use routers
 
 app.use("/v1/users", userRouter);
+app.use("/v1/subcategories", subcategoriesRouter);
 
 app.listen(PORT, () => {
   console.log(`running on :  http://localhost:${PORT}`);
