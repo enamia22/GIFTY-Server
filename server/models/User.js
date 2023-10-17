@@ -6,6 +6,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  username: {
+    type: String,
+    required: true,
+    unique: true
+  },
   lastName: {
     type: String,
     required: true,
@@ -22,6 +27,10 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     default: "manager"
+  },
+  active: {
+    type: Boolean,
+    default: true
   }
 });
 userSchema.methods.generateAuthToken = async function () {
