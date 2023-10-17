@@ -1,29 +1,53 @@
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
-const verifyToken = require("../middleware/authMiddleware");
+const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
+
 
 //Add User
 const addUser = async (req, res) => {
     try {
-      let { firstName, lastName, username, email, password, role, active } = req.body;
+      let { 
+        firstName, 
+        lastName, 
+        username, 
+        email, 
+        password, 
+        role, 
+        active } = req.body;
+
       if (!firstName || !lastName || !email || !password || !role || !username ) {
         res.status(200).send({ message: "missing field" });
       }
  
       const existingUser = await User.findOne({ email });
-      if (existingUser)
+      if (existingUser){
         return res.status(400).json({ error: "User already exits" });
+      }
+      const currentDate = new Date();
+
       const salt = await bcrypt.genSalt(10);
       password = await bcrypt.hash(password, salt);
-      const newUser = new User({ firstName, lastName, username, email, password, role, active });
+
+      const newUser = new User({
+        firstName,
+        lastName,
+        username,
+        email,
+        password,
+        role,
+        active,
+        creationDate: currentDate, // Set the creationDate field to the current timestamp
+      });
+
       const token = await newUser.generateAuthToken();
       await newUser.save();
+
       res.json({ message: "success", token: token });
 
     } catch (error) {
       console.log("Error in registration: " + error);
-      res.status(500).send(error);
+      res.status(500).send(error.message);
     }
   };
 
@@ -41,25 +65,27 @@ const loginUser = async (req, res) => {
     if (!validPassword) {
       res.status(400).json({ message: "Invalid Credentials" });
     } else {
+
+      const currentDate = new Date();
+      await User.findByIdAndUpdate(valid._id, { lastLogin: currentDate}, {
+        new: false,
+      });
+
       const token = await valid.generateAuthToken();
       res.status(200).json({ token: token, status: 200 });
     }
   } catch (error) {
-    res.status(500).json({ error: error });
+    console.log("Error with login: " + error);
+    res.status(500).json({ error: error.message });
   }
 };
 
 //get users 
 const getAllUsers = async (req, res) => {
   try {
-    const decodedUser = await verifyToken(req);
-    if (!decodedUser) {
-      return res.status(401).json({ message: "Unauthorized user" });
-    }
-    const user = await User.findById(decodedUser.id);
-    if (user.role !== "admin" && user.role !== "manager") {
-      return res.status(401).json({ message: "Unauthorized role" });
-    }
+
+    adminOrManager(req, res);
+    
     const { page = 1, sort = 'ASC' } = req.query;
     const limit = 10;
     const sortOption = sort === 'DESC' ? '-_id' : '_id';
@@ -77,20 +103,15 @@ const getAllUsers = async (req, res) => {
       return res.status(500).json({ error: 'Error retrieving data' });
     }
   } catch (error) {
+    console.log("Error retrieving data: " + error);
     res.status(500).json({ error: error.message });
   }
 }
 
 const findUserById = async (req, res) => {
   try {
-    const decodedUser = await verifyToken(req);
-    if (!decodedUser) {
-      return res.status(401).json({ message: "Unauthorized user" });
-    }
-    const user = await User.findById(decodedUser.id);
-    if (user.role !== "admin" && user.role !== "manager") {
-      return res.status(401).json({ message: "Unauthorized role" });
-    }
+    adminOrManager(req, res);
+
     const userId = req.params.id;
     const check = mongoose.Types.ObjectId.isValid(userId);
     if (check) {
@@ -103,21 +124,15 @@ const findUserById = async (req, res) => {
     } else {
       res.send("not an objectID");
     }
-  } catch (err) {
-    console.log(err.message);
+  } catch (error) {
+    console.log("Error while looking for the user by id: " + error);
+    res.status(500).json({ error: error.message });
   }
 };
 
 const findUserByQuery = async (req, res) => {
   try {
-    const decodedUser = await verifyToken(req);
-    if (!decodedUser) {
-      return res.status(401).json({ message: "Unauthorized user" });
-    }
-    const user = await User.findById(decodedUser.id);
-    if (user.role !== "admin" && user.role !== "manager") {
-      return res.status(401).json({ message: "Unauthorized role" });
-    }
+    adminOrManager(req, res);
 
     const query = req.query.query; 
 
@@ -125,66 +140,54 @@ const findUserByQuery = async (req, res) => {
 
     res.json(results);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'An error occurred' });
+    console.log("Error with query: " + error);
+    res.status(500).json({ error: error.message });
   }
 };
 
 const updateUser = async (req, res) => {
   try {
-    const decodedUser = await verifyToken(req);
-    if (!decodedUser) {
-      return res.status(401).json({ message: "Unauthorized user" });
-    }
-    const user = await User.findById(decodedUser.id);
-    if (user.role !== "admin") {
-      return res.status(401).json({ message: "Unauthorized role" });
-    }
+    adminOnly(req, res);
+
     const userId = req.params.id;
     const userUpdated = req.body;
-    const currentDate = new Date(); 
 
-    const localDateTimeString = currentDate.toLocaleString();
-    userUpdated.lastUpdate = localDateTimeString;
+    userUpdated.lastUpdate = new Date();
 
     const check = mongoose.Types.ObjectId.isValid(userId);
     if (check) {
       const user = await User.findById(userId).select("-password");
       if (user) {
         const existingUser = await User.findOne({
-          $or: [
-            { email: userUpdated.email },
-            { username: userUpdated.username }
+          $and: [
+            { $or: [{ email: userUpdated.email }, { username: userUpdated.username }] },
+            { _id: { $ne: userId } } // search in all users except the current one
           ]
         });
+        
         if (existingUser)
         return res.status(400).json({ error: "User already exits" });
         const user = await User.findByIdAndUpdate(userId, userUpdated, {
           new: true,
         });
-        res.json(user);
+        res.json({"user updated successfuly": user});
       } else {
         res.send("not found");
       }
     } else {
       res.send("not an objectID");
     }
-  } catch {
-    console.log(err.message);
+
+  } catch (error){
+    console.log("Error while updating the user: " + error);
+    res.status(500).json({ error: error.message });
   }
 };
 
 const deleteUser = async (req, res) => {
   try {
-    const decodedUser = await verifyToken(req);
-    if (!decodedUser) {
-      return res.status(401).json({ message: "Unauthorized user" });
-    }
-    const user = await User.findById(decodedUser.id);
-    if (user.role !== "admin") {
-      return res.status(401).json({ message: "Unauthorized role" });
-    }
-
+    adminOnly(req, res);
+    
     const userId = req.params.id;
 
     const check = mongoose.Types.ObjectId.isValid(userId);
@@ -198,8 +201,9 @@ const deleteUser = async (req, res) => {
     } else {
       res.send("not an objectID");
     }
-  } catch {
-    console.log(err.message);
+  } catch (error) {
+    console.log("Error while deleting the user: " + error);
+    res.status(500).json({ error: error.message });
   }
 }; 
 
