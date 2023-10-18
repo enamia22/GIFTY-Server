@@ -5,6 +5,7 @@ const categorySchema = new mongoose.Schema({
   subcategoryName: {
     type: String,
     required: true,
+    unique: true
   },
   categoryId: {
     type: mongoose.Schema.Types.ObjectId, 
@@ -12,22 +13,19 @@ const categorySchema = new mongoose.Schema({
   },
   active: {
     type: Boolean,
-    default: true
+    default: false
   },
   lastUpdate: {
     type: Date // Set the default value to the current timestamp
   },
   creationDate: {
     type: Date, // Set the default value to the current timestamp
-  },
-  lastLogin: {
-    type: Date // Set the default value to the current timestamp
-  },
+  }
 });
 
 categorySchema.plugin(mongoosePaginate);
 
   
-  const Category = mongoose.model("subcategories", categorySchema);
-  
-  module.exports = Category;
+const Category = mongoose.model("subcategories", categorySchema);
+
+module.exports = Category;

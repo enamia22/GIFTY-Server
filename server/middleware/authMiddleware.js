@@ -27,11 +27,11 @@ const adminOrManager = async (req, res) =>{
 
   const decodedUser = await verifyToken(req, res);
   if (!decodedUser) {
-    return res.status(401).json({ message: "Unauthorized user" });
+    return res.status(403).json({ message: "Unauthorized user" });
   }
   const user = await User.findById(decodedUser.id);
   if (user.role !== "admin" && user.role !== "manager") {
-    return res.status(401).json({ message: "Unauthorized role" });
+    return res.status(403).json({ message: "Unauthorized role" });
   }
  
 }
@@ -40,11 +40,11 @@ const adminOnly = async (req, res) =>{
 
   const decodedUser = await verifyToken(req, res);
   if (!decodedUser) {
-    return res.status(401).json({ message: "Unauthorized user" });
+    return res.status(403).json({ message: "Unauthorized user" });
   }
   const user = await User.findById(decodedUser.id);
   if (user.role !== "admin") {
-    return res.status(401).json({ message: "Unauthorized role" });
+    return res.status(403).json({ message: "Unauthorized role" });
   }
  
 }

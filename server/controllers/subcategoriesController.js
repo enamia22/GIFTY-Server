@@ -14,7 +14,7 @@ const addSubcategory = async (req, res) => {
       } = req.body;
 
       if (!subcategoryName || !categoryId ) {
-        res.status(200).send({ message: "missing field" });
+        res.status(400).send({ message: "missing field" });
       }
  
       const existingCategory = await Category.findOne({ subcategoryName });
@@ -32,7 +32,7 @@ const addSubcategory = async (req, res) => {
 
       const createdCategory =  await newCategory.save();
       if(!createdCategory) return res.json({ message: "subcategory not created" });
-      res.json({ message: "subcategory created with success" });
+      res.status(200).json({ message: "subcategory created with success" });
 
     } catch (error) {
       console.log("Error while adding new subcategory: " + error);
@@ -59,7 +59,7 @@ const getAllSubcategories = async (req, res) => {
       };
 
       const result = await Category.paginate({}, options);
-      return res.json(result);
+      return res.status(200).json(result);
     } catch (error) {
       return res.status(500).json({ error: 'Error retrieving data' });
     }
@@ -78,12 +78,12 @@ const findSubcategoryById = async (req, res) => {
     if (check) {
       const subcategory = await Category.findById(subcategoryId);
       if (subcategory) {
-        res.json(subcategory);
+        res.status(200).json(subcategory);
       } else {
-        res.send("not found");
+        res.status(404).send("not found");
       }
     } else {
-      res.send("not an objectID");
+      res.status(404).send("not an objectID");
     }
   } catch (error) {
     console.log("Error while looking for the subcategory by id: " + error);
@@ -99,7 +99,7 @@ const findSubcategoryByQuery = async (req, res) => {
 
     const results = await Category.find({ subcategoryName: { $regex: query, $options: 'i' } });
 
-    res.json(results);
+    res.status(200).json(results);
   } catch (error) {
     console.log("Error with query: " + error);
     res.status(500).json({ error: error.message });
@@ -131,12 +131,12 @@ const updateSubcategory = async (req, res) => {
         const subcategory = await Category.findByIdAndUpdate(subcategoryId, subcategoryUpdated, {
           new: true,
         });
-        res.json({"subcategory updated successfuly": subcategory});
+        res.status(200).json({"subcategory updated successfuly": subcategory});
       } else {
-        res.send("not found");
+        res.status(404).send("not found");
       }
     } else {
-      res.send("not an objectID");
+      res.status(404).send("not an objectID");
     }
 
   } catch (error){
@@ -155,12 +155,12 @@ const deleteSubcategory = async (req, res) => {
     if (check) {
       const subcategory = await Category.findByIdAndDelete(subcategoryId);
       if (subcategory) {
-        res.send("subcategory deleted successfully");
+        res.status(200).send("subcategory deleted successfully");
       } else {
-        res.send("not found");
+        res.status(404).send("not found");
       }
     } else {
-      res.send("not an objectID");
+      res.status(404).send("not an objectID");
     }
   } catch (error) {
     console.log("Error while deleting the subcategory: " + error);
