@@ -1,4 +1,4 @@
-const Category = require("../models/Category");
+const Category = require("../models/SubCategory");
 const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
 
