@@ -1,74 +1,75 @@
 const Category = require("../models/Category");
 const User = require("../models/User");
 const verifyToken = require("../middleware/authMiddleware");
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const addCategory = async (req, res) => {
   try {
-    const decodedUser = await verifyToken(req);
-    if (!decodedUser) {
-      return res.status(401).json({ message: "Unauthorized user" });
-    }
-    const user = await User.findById(decodedUser.id);
-    if (user.role !== "admin" && user.role !== "manager") {
-      return res.status(401).json({ message: "Unauthorized role" });
-    }
+      const decodedUser = await verifyToken(req);
+      if (!decodedUser) {
+        return res.status(401).json({ message: "Unauthorized user" });
+      }
+      const user = await User.findById(decodedUser.id);
+      if (user.role !== "admin" && user.role !== "manager") {
+        return res.status(401).json({ message: "Unauthorized role" });
+      }
 
-    const { categoryName } = req.body;
+      const {categoryName} = req.body;
 
-    if (!categoryName) {
-      res.send({ message: "missing name" });
-    }
+      if (!categoryName) {
+          res.send({message: "missing name"})
+      } 
 
-    const existingCategory = await Category.findOne({ categoryName });
+      const existingCategory = await Category.findOne({ categoryName });
 
-    if (existingCategory) {
-      return res.status(409).json({ message: "Category already exists" });
-    }
+      if (existingCategory) {
+          return res.status(409).json({ message: "Category already exists"});
+      }
 
-    const currentDate = new Date();
+      const currentDate = new Date();
 
-    const newCategory = new Category({
-      categoryName: categoryName,
-      creationDate: currentDate,
-    });
-    const createdCategory = await newCategory.save();
-    if (!createdCategory) {
-      return res.json({ message: "Category was not created" });
-    } else {
-      res.json({ message: "Category created successfully" });
-    }
-  } catch (e) {
-    console.log(e.message);
+      const newCategory = new Category({
+          categoryName: categoryName,
+          creationDate: currentDate
+      });
+      const createdCategory = await newCategory.save();
+      if (!createdCategory) {
+          return res.json({ message: "Category was not created"});
+      } else {
+          res.json({ message: "Category created successfully"});
+      }
+
+  } catch(e) {
+      console.log(e.message);
   }
 };
 
 const getAllCategories = async (req, res) => {
-  try {
-    const decodedUser = await verifyToken(req);
-    if (!decodedUser) {
+try {
+  const decodedUser = await verifyToken(req);
+  if (!decodedUser) {
       return res.status(401).json({ message: "Unauthorized user" });
-    }
-    const user = await User.findById(decodedUser.id);
-    if (user.role !== "admin" && user.role !== "manager") {
+  }
+  const user = await User.findById(decodedUser.id);
+  if (user.role !== "admin" && user.role !== "manager") {
       return res.status(401).json({ message: "Unauthorized role" });
-    }
+  }
+    
+  const { page = 1, sort = 'ASC' } = req.query;
+  const limit = 10;
+  const sortOption = sort === 'DESC' ? '-_id' : '_id';
 
-    const { page = 1, sort = "ASC" } = req.query;
-    const limit = 10;
-    const sortOption = sort === "DESC" ? "-_id" : "_id";
-
-    try {
+  try {
       const options = {
-        page: page,
-        limit: limit,
-        sort: sortOption,
+      page: page,
+      limit: limit,
+      sort: sortOption,
       };
 
       const result = await Category.paginate({}, options);
       return res.json(result);
     } catch (error) {
-      return res.status(500).json({ error: "Error retrieving data" });
+      return res.status(500).json({ error: 'Error retrieving data' });
     }
   } catch (error) {
     console.log("Error retrieving data: " + error);
@@ -77,20 +78,18 @@ const getAllCategories = async (req, res) => {
 
 const findCategoryByQuery = async (req, res) => {
   try {
-    const decodedUser = await verifyToken(req);
-    if (!decodedUser) {
-      return res.status(401).json({ message: "Unauthorized user" });
-    }
-    const user = await User.findById(decodedUser.id);
-    if (user.role !== "admin" && user.role !== "manager") {
-      return res.status(401).json({ message: "Unauthorized role" });
-    }
+      const decodedUser = await verifyToken(req);
+      if (!decodedUser) {
+          return res.status(401).json({ message: "Unauthorized user" });
+      }
+      const user = await User.findById(decodedUser.id);
+      if (user.role !== "admin" && user.role !== "manager") {
+          return res.status(401).json({ message: "Unauthorized role" });
+      }
 
-    const query = req.query.query;
+    const query = req.query.query; 
 
-    const results = await Category.find({
-      categoryName: { $regex: query, $options: "i" },
-    });
+    const results = await Category.find({ categoryName: { $regex: query, $options: 'i' } });
 
     res.json(results);
   } catch (error) {
@@ -101,14 +100,14 @@ const findCategoryByQuery = async (req, res) => {
 
 const findCategoryById = async (req, res) => {
   try {
-    const decodedUser = await verifyToken(req);
-    if (!decodedUser) {
-      return res.status(401).json({ message: "Unauthorized user" });
-    }
-    const user = await User.findById(decodedUser.id);
-    if (user.role !== "admin" && user.role !== "manager") {
-      return res.status(401).json({ message: "Unauthorized role" });
-    }
+      const decodedUser = await verifyToken(req);
+      if (!decodedUser) {
+          return res.status(401).json({ message: "Unauthorized user" });
+      }
+      const user = await User.findById(decodedUser.id);
+      if (user.role !== "admin" && user.role !== "manager") {
+          return res.status(401).json({ message: "Unauthorized role" });
+      }
 
     const categoryId = req.params.id;
     const check = mongoose.Types.ObjectId.isValid(categoryId);
@@ -132,11 +131,11 @@ const updateCategory = async (req, res) => {
   try {
     const decodedUser = await verifyToken(req);
     if (!decodedUser) {
-      return res.status(401).json({ message: "Unauthorized user" });
+        return res.status(401).json({ message: "Unauthorized user" });
     }
     const user = await User.findById(decodedUser.id);
     if (user.role !== "admin" && user.role !== "manager") {
-      return res.status(401).json({ message: "Unauthorized role" });
+        return res.status(401).json({ message: "Unauthorized role" });
     }
 
     const categoryId = req.params.id;
@@ -151,27 +150,24 @@ const updateCategory = async (req, res) => {
         const existingCategory = await Category.findOne({
           $and: [
             { $or: [{ categoryName: categoryUpdated.categoryName }] },
-            { _id: { $ne: categoryId } },
-          ],
+            { _id: { $ne: categoryId } } 
+          ]
         });
-
+        
         if (existingCategory)
-          return res.status(400).json({ error: "category already exits" });
-        const category = await Category.findByIdAndUpdate(
-          categoryId,
-          categoryUpdated,
-          {
-            new: true,
-          }
-        );
-        res.json({ "category updated successfully": category });
+        return res.status(400).json({ error: "category already exits" });
+        const category = await Category.findByIdAndUpdate(categoryId, categoryUpdated, {
+          new: true,
+        });
+        res.json({"category updated successfully": category});
       } else {
         res.send("not found");
       }
     } else {
       res.send("not an objectID");
     }
-  } catch (error) {
+
+  } catch (error){
     console.log("Error while updating the user: " + error);
     res.status(500).json({ error: error.message });
   }
@@ -181,13 +177,13 @@ const deleteCategory = async (req, res) => {
   try {
     const decodedUser = await verifyToken(req);
     if (!decodedUser) {
-      return res.status(401).json({ message: "Unauthorized user" });
+    return res.status(401).json({ message: "Unauthorized user" });
     }
     const user = await User.findById(decodedUser.id);
     if (user.role !== "admin" && user.role !== "manager") {
-      return res.status(401).json({ message: "Unauthorized role" });
+    return res.status(401).json({ message: "Unauthorized role" });
     }
-
+    
     const categoryId = req.params.id;
 
     const check = mongoose.Types.ObjectId.isValid(categoryId);
@@ -205,7 +201,8 @@ const deleteCategory = async (req, res) => {
     console.log("Error while deleting the subcategory: " + error);
     res.status(500).json({ error: error.message });
   }
-};
+}; 
+
 
 module.exports = {
   addCategory,
@@ -213,5 +210,5 @@ module.exports = {
   findCategoryByQuery,
   findCategoryById,
   updateCategory,
-  deleteCategory,
+  deleteCategory
 };
