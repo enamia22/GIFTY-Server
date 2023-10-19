@@ -130,7 +130,6 @@ const findUserById = async (req, res) => {
 
 const findUserByQuery = async (req, res) => {
   try {
-
     adminOrManager(req, res);
 
     const query = req.query.query; 
