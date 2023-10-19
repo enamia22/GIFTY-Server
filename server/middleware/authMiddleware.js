@@ -1,9 +1,11 @@
 const jwt = require("jsonwebtoken");
-const secretKey = "abracadabra";
-const User = require("../models/User")
+const config = require('../config/env')
+const User = require("../models/User");
+
+const secretKey = config.SECRET;
 
 function verifyToken(req, res) {
-  let token = req.headers["authorization"];
+  const token = req.headers["authorization"];
   let user;
   if (!token) {
     return res.status(403).json({ auth: false, message: "No token provided." });
@@ -16,8 +18,6 @@ function verifyToken(req, res) {
         .status(401)
         .json({ auth: false, message: "Failed to authenticate token." });
     }
-    req.userId = decoded.id;
-    req.role = decoded.role;
     user = decoded  
   });
   return user
@@ -27,11 +27,11 @@ const adminOrManager = async (req, res) =>{
 
   const decodedUser = await verifyToken(req, res);
   if (!decodedUser) {
-    return res.status(403).json({ message: "Unauthorized user" });
+    return res.status(401).json({ message: "Unauthorized user" });
   }
   const user = await User.findById(decodedUser.id);
   if (user.role !== "admin" && user.role !== "manager") {
-    return res.status(403).json({ message: "Unauthorized role" });
+    return res.status(401).json({ message: "Unauthorized role" });
   }
  
 }
@@ -40,17 +40,15 @@ const adminOnly = async (req, res) =>{
 
   const decodedUser = await verifyToken(req, res);
   if (!decodedUser) {
-    return res.status(403).json({ message: "Unauthorized user" });
+    return res.status(401).json({ message: "Unauthorized user" });
   }
   const user = await User.findById(decodedUser.id);
   if (user.role !== "admin") {
-    return res.status(403).json({ message: "Unauthorized role" });
+    return res.status(401).json({ message: "Unauthorized role" });
   }
  
 }
 module.exports = {
   adminOrManager,
-  adminOnly,
-  verifyToken
+  adminOnly
 };
-

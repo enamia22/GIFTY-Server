@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const mongoosePaginate = require('mongoose-paginate-v2');
+const config = require('../config/env')
+const secretKey = config.SECRET;
 
 const userSchema = new mongoose.Schema({
   firstName: {
@@ -34,21 +36,27 @@ const userSchema = new mongoose.Schema({
     default: true
   },
   lastUpdate: {
-    type: String,
+    type: Date
   },
   address: {
     type: String,
   },
   phone: {
     type: Number
-  }
+  },
+  creationDate: {
+    type: Date, 
+  },
+  lastLogin: {
+    type: Date 
+  },
 });
 
 userSchema.plugin(mongoosePaginate);
 
 userSchema.methods.generateAuthToken = async function () {
     try {
-      let token = jwt.sign({ id: this._id, email: this.email, role: this.role }, "abracadabra", {
+      let token = jwt.sign({ id: this._id, email: this.email, role: this.role }, secretKey, {
         expiresIn: "40h",
       });
   

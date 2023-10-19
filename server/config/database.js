@@ -1,9 +1,9 @@
 
 const mongoose = require("mongoose");
-
+const config = require('./env')
 module.exports = async function mongoDBConnection() {
   await mongoose
-    .connect("mongodb+srv://hajar:mB0PLuu1MWBFswwB@cluster0.nb8jicc.mongodb.net/GIFTY")
+    .connect(config.DB_URI)
     .then(() => console.log("connected to db"));
   return mongoose;
 };

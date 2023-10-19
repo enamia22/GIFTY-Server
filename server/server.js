@@ -14,6 +14,10 @@ const categoryRouter = require("./routes/categoryRoutes");
 const orderRouter = require("./routes/orderRoutes");
 const productRouter = require("./routes/productsRoutes");
 
+//import routers
+const userRouter = require("./routes/userRoutes");
+
+
 // connect to database
 mongoDBConnection();
 
@@ -22,6 +26,10 @@ app.use("/v1/users", userRouter);
 app.use("/v1/categories", categoryRouter);
 app.use("/v1/orders", orderRouter);
 app.use("/v1/products", productRouter);
+
+
+app.use("/v1/users", userRouter);
+
 
 app.listen(PORT, () => {
   console.log(`running on :  http://localhost:${PORT}`);
