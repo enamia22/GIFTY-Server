@@ -6,8 +6,8 @@ const mongoose = require("mongoose");
 //Add User
 const addUser = async (req, res) => {
     try {
-      let { firstName, lastName, username, email, password, role, active } = req.body;
-      if (!firstName || !lastName || !email || !password || !role || !username ) {
+      let { firstName, lastName, username, email, password, role, active, phone, address } = req.body;
+      if (!firstName || !lastName || !email || !password || !role || !username || !phone || !address ) {
         res.status(200).send({ message: "missing field" });
       }
  
@@ -16,7 +16,7 @@ const addUser = async (req, res) => {
         return res.status(400).json({ error: "User already exits" });
       const salt = await bcrypt.genSalt(10);
       password = await bcrypt.hash(password, salt);
-      const newUser = new User({ firstName, lastName, username, email, password, role, active });
+      const newUser = new User({ firstName, lastName, username, email, password, role, active, phone, address });
       const token = await newUser.generateAuthToken();
       await newUser.save();
       res.json({ message: "success", token: token });
