@@ -65,7 +65,6 @@ const loginUser = async (req, res) => {
     if (!validPassword) {
       res.status(400).json({ message: "Invalid Credentials" });
     } else {
-
       const currentDate = new Date();
       await User.findByIdAndUpdate(valid._id, { lastLogin: currentDate}, {
         new: false,
@@ -83,7 +82,6 @@ const loginUser = async (req, res) => {
 //get users 
 const getAllUsers = async (req, res) => {
   try {
-
     adminOrManager(req, res);
     
     const { page = 1, sort = 'ASC' } = req.query;
@@ -132,6 +130,7 @@ const findUserById = async (req, res) => {
 
 const findUserByQuery = async (req, res) => {
   try {
+
     adminOrManager(req, res);
 
     const query = req.query.query; 
@@ -177,7 +176,6 @@ const updateUser = async (req, res) => {
     } else {
       res.send("not an objectID");
     }
-
   } catch (error){
     console.log("Error while updating the user: " + error);
     res.status(500).json({ error: error.message });

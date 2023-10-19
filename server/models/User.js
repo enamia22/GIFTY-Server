@@ -2,8 +2,8 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const mongoosePaginate = require('mongoose-paginate-v2');
 const config = require('../config/env')
-
 const secretKey = config.SECRET;
+
 const userSchema = new mongoose.Schema({
   firstName: {
     type: String,
@@ -36,13 +36,19 @@ const userSchema = new mongoose.Schema({
     default: true
   },
   lastUpdate: {
-    type: Date // Set the default value to the current timestamp
+    type: Date
+  },
+  address: {
+    type: String,
+  },
+  phone: {
+    type: Number
   },
   creationDate: {
-    type: Date, // Set the default value to the current timestamp
+    type: Date, 
   },
   lastLogin: {
-    type: Date // Set the default value to the current timestamp
+    type: Date 
   },
 });
 
