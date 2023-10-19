@@ -37,7 +37,7 @@ const loginUser = async (req, res) => {
     if(!status) res.status(404).json({ message: "User not active" });
    
     const validPassword = await bcrypt.compare(password, valid.password);
-
+   
     if (!validPassword) {
       res.status(400).json({ message: "Invalid Credentials" });
     } else {
@@ -107,7 +107,7 @@ const findUserById = async (req, res) => {
     console.log(err.message);
   }
 };
-
+//search for a user By Id
 const findUserByQuery = async (req, res) => {
   try {
     const decodedUser = await verifyToken(req);
@@ -202,6 +202,8 @@ const deleteUser = async (req, res) => {
     console.log(err.message);
   }
 }; 
+
+
 
   module.exports = {
     addUser,

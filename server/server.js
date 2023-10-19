@@ -10,6 +10,8 @@ app.use(bodyParser.json());
 //import routers
 
 const userRouter = require("./routes/userRoutes");
+const customersRouter = require("./routes/customersRoutes");
+
 
 // connect to database
 mongoDBConnection();
@@ -17,6 +19,8 @@ mongoDBConnection();
 // use routers
 
 app.use("/v1/users", userRouter);
+app.use("/v1/customers" , customersRouter);
+
 
 app.listen(PORT, () => {
   console.log(`running on :  http://localhost:${PORT}`);
