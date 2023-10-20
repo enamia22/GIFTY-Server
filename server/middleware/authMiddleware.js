@@ -23,7 +23,7 @@ function verifyToken(req, res) {
   return user
 }
 
-const adminOrManager = async (req, res) =>{
+const adminOrManager = async (req, res, next) =>{
 
   const decodedUser = await verifyToken(req, res);
   if (!decodedUser) {
@@ -33,7 +33,7 @@ const adminOrManager = async (req, res) =>{
   if (user.role !== "admin" && user.role !== "manager") {
     return res.status(401).json({ message: "Unauthorized role" });
   }
- 
+ next();
 }
 
 const adminOnly = async (req, res) =>{
