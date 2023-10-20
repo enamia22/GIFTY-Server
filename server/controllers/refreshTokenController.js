@@ -85,9 +85,30 @@ const revokeRefreshToken = async (tokenId, revokedByIp) => {
 };
 
 const createRefreshToken = async (userId, email, role, createdByIp) => {
+  const existRefreshToken = await RefreshToken.findOne({ email });
+  if(existRefreshToken){
+    return updateRefreshToken(existRefreshToken._id, userId, email, role, createdByIp);
+  }else{
+    const value = generateRefreshToken();
+    const expires = new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000); // Set expiration to 7 days
+    const refreshToken = new RefreshToken({
+      value,
+      userId,
+      email,
+      role,
+      expires,
+      createdByIp,
+      createdAt: new Date(),
+    });
+    await refreshToken.save();
+    return refreshToken;
+  }
+  
+};
+const updateRefreshToken = async (refreshTokenId, userId, email, role, createdByIp) => {
   const value = generateRefreshToken();
   const expires = new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000); // Set expiration to 7 days
-  const refreshToken = new RefreshToken({
+  const updatedRefreshToken = {
     value,
     userId,
     email,
@@ -95,8 +116,10 @@ const createRefreshToken = async (userId, email, role, createdByIp) => {
     expires,
     createdByIp,
     createdAt: new Date(),
+  };
+  const refreshToken = await RefreshToken.findByIdAndUpdate(refreshTokenId, updatedRefreshToken, {
+    new: true,
   });
-  await refreshToken.save();
   return refreshToken;
 };
 
@@ -128,4 +151,5 @@ module.exports = {
   refreshAccessToken,
   isTokenExpired,
   generateAccessToken,
+  updateRefreshToken
 };

@@ -42,10 +42,18 @@ const addUser = async (req, res) => {
       creationDate: currentDate, // Set the creationDate field to the current timestamp
     });
 
-    const token = await newUser.generateAuthToken();
-    await newUser.save();
-
-    res.json({ message: "success", token: token });
+    // const token = await newUser.generateAuthToken();
+    const createdUser = await newUser.save();
+    const token = generateAccessToken(createdUser._id, createdUser.email, createdUser.role);
+    const refreshToken = await createRefreshToken(
+      createdUser._id,
+      createdUser.email,
+      createdUser.role,
+      "MustaphaIpAddress"
+    );
+    res
+      .status(200)
+      .json({ token: token, refreshToken: refreshToken.value, status: 200 });
   } catch (error) {
     console.log("Error in registration: " + error);
     res.status(500).send(error.message);
@@ -75,7 +83,7 @@ const loginUser = async (req, res) => {
         }
       );
 
-      const token = await generateAccessToken(user._id, user.email, user.role);
+      const token = generateAccessToken(user._id, user.email, user.role);
       const refreshToken = await createRefreshToken(
         user._id,
         user.email,

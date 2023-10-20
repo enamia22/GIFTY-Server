@@ -28,6 +28,6 @@ const categorySchema = new mongoose.Schema({
 categorySchema.plugin(mongoosePaginate);
 
   
-  const Category = mongoose.model("subcategories", categorySchema);
-  
-  module.exports = Category;
+const Category = mongoose.model("subcategories", categorySchema);
+
+module.exports = Category;
