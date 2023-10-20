@@ -14,6 +14,7 @@ const categoryRouter = require("./routes/categoryRoutes");
 const orderRouter = require("./routes/orderRoutes");
 const productRouter = require("./routes/productsRoutes");
 const subcategoriesRouter = require("./routes/subcategoriesRoutes");
+const customersRouter = require("./routes/customersRoutes");
 
 // connect to database
 mongoDBConnection();
@@ -23,11 +24,9 @@ app.use("/v1/users", userRouter);
 app.use("/v1/categories", categoryRouter);
 app.use("/v1/orders", orderRouter);
 app.use("/v1/products", productRouter);
-
-
-app.use("/v1/users", userRouter);
-app.use("/v1/categories", categoryRouter);
 app.use("/v1/subcategories", subcategoriesRouter);
+app.use("/v1/customers" , customersRouter);
+
 
 app.listen(PORT, () => {
   console.log(`running on :  http://localhost:${PORT}`);
