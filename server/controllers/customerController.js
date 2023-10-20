@@ -5,6 +5,11 @@ const bcrypt = require("bcrypt");
 const verifyToken = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
 const crypto = require('crypto');
+const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
+const {
+  createRefreshToken,
+  generateAccessToken,
+} = require("../controllers/refreshTokenController");
 
 
 
@@ -113,16 +118,23 @@ const addCustomer = async (req, res) => {
       const salt = await bcrypt.genSalt(10);
       password = await bcrypt.hash(password, salt);
       const newCustomer = new Customer({ firstName, lastName, email, password, active });
-      const token = await newCustomer.generateAuthToken();
+
       newCustomer.confirmationToken=confirmationToken;
      const createdCustomer =  await newCustomer.save();
+     const token = await generateAccessToken(createdCustomer._id, createdCustomer.email, createdCustomer.role);
+     const refreshToken = await createRefreshToken(
+      createdCustomer._id,
+      createdCustomer.email,
+      createdCustomer.role,
+       "MustaphaIpAddress"
+     );
       const username =  firstName +" "+ lastName;
       // User registration
   // (in a real application, you'd send an actual email)
   const confirmationLink = `http://localhost:3001/v1/customers/validate/${createdCustomer._id}/${confirmationToken}`;
         main(email, username, confirmationLink).catch(console.error);
 
-      res.status(201).json({ message: "Customer created successfully", token: token, status: 201 });
+      res.status(201).json({ message: "Customer created successfully", token: token, status: 201, refreshToken : refreshToken.value });
 
 
     } catch (error) {
@@ -136,19 +148,26 @@ const loginCustomer = async (req, res) => {
   
   const { email, password } = req.body;
   try {
-    const valid = await Customer.findOne({ email });
-    if (!valid) res.status(404).json({ message: "Customer doesn't exist" });
-    const status = valid.active;
+    const user = await Customer.findOne({ email });
+    if (!user) res.status(404).json({ message: "Customer doesn't exist" });
+    const status = user.active;
     if(!status) res.status(404).json({ message: "Customer not active" });
    
-    const validPassword = await bcrypt.compare(password, valid.password);
+    const validPassword = await bcrypt.compare(password, user.password);
 
     if (!validPassword) {
       res.status(401).json({ message: "Invalid Credentials" , status: 401 });
     } else {
-      const token = await valid.generateAuthToken();
-      res.status(200).json({ message: "login success" , token: token, status: 200 });
-    }
+      const token = await generateAccessToken(user._id, user.email, user.role);
+      const refreshToken = await createRefreshToken(
+        user._id,
+        user.email,
+        user.role,
+        "MustaphaIpAddress"
+      );
+      res
+        .status(200)
+        .json({ token: token, refreshToken: refreshToken.value, status: 200 });    }
   } catch (error) {
     res.status(500).json({ error: error });
   }
@@ -157,13 +176,10 @@ const loginCustomer = async (req, res) => {
 //get Customers 
 const getAllCustomers = async (req, res) => {
   try {
-    const decodedCustomer = await verifyToken(req);
-    if (!decodedCustomer) {
-      return res.status(401).json({ message: "Unauthorized Customer" });
-    }
-    const user = await User.findById(decodedCustomer.id);
-    if (user.role !== "admin" && user.role !== "manager") {
-      return res.status(401).json({ message: "Unauthorized role" });
+    let authorized = await adminOrManager(req.validateToken);
+    console.log(authorized);
+    if (!authorized) {
+      res.status(403).json({ message: "Not authorized" });
     }
     const { page = 1, sort = 'ASC' } = req.query;
     const limit = 10;
@@ -190,13 +206,10 @@ const getAllCustomers = async (req, res) => {
 //search for a Customer By query
 const findCustomerByQuery = async (req, res) => {
   try {
-    const decodedCustomer = await verifyToken(req);
-    if (!decodedCustomer) {
-      return res.status(401).json({ message: "Unauthorized Customer" });
-    }
-    const user = await User.findById(decodedCustomer.id);
-    if (user.role !== "admin" && user.role !== "manager") {
-      return res.status(401).json({ message: "Unauthorized role" });
+    let authorized = await adminOrManager(req.validateToken);
+    console.log(authorized);
+    if (!authorized) {
+      res.status(403).json({ message: "Not authorized" });
     }
 
     const query = req.query.query; 
@@ -213,13 +226,10 @@ const findCustomerByQuery = async (req, res) => {
 
 const findCustomerById = async (req, res) => {
   try {
-    const decodedUser = await verifyToken(req);
-    if (!decodedUser) {
-      return res.status(401).json({ message: "Unauthorized Customer" });
-    }
-    const user = await User.findById(decodedUser.id);
-    if (user.role !== "admin" && user.role !== "manager") {
-      return res.status(401).json({ message: "Unauthorized role" });
+    let authorized = await adminOrManager(req.validateToken);
+    console.log(authorized);
+    if (!authorized) {
+      res.status(403).json({ message: "Not authorized" });
     }
     const customerId = req.params.id;
     const check = mongoose.Types.ObjectId.isValid(customerId);
@@ -243,13 +253,10 @@ const findCustomerById = async (req, res) => {
 
 const updateCustomer = async (req, res) => {
   try {
-    const decodedUser = await verifyToken(req);
-    if (!decodedUser) {
-      return res.status(401).json({ message: "Unauthorized Customer" });
-    }
-    const user = await User.findById(decodedUser.id);
-    if (user.role !== "admin") {
-      return res.status(401).json({ message: "Unauthorized role" });
+    let authorized = await adminOnly(req.validateToken);
+    console.log(authorized);
+    if (!authorized) {
+      res.status(403).json({ message: "Not authorized" });
     }
     
     const customerId = req.params.id;
@@ -287,13 +294,10 @@ const updateCustomer = async (req, res) => {
 //delete costumers
 const deleteCustomer = async (req, res) => {
   try {
-    const decodedUser = await verifyToken(req);
-    if (!decodedUser) {
-      return res.status(401).json({ message: "Unauthorized user" });
-    }
-    const user = await User.findById(decodedUser.id);
-    if (user.role !== "admin") {
-      return res.status(401).json({ message: "Unauthorized role" });
+    let authorized = await adminOnly(req.validateToken);
+    console.log(authorized);
+    if (!authorized) {
+      res.status(403).json({ message: "Not authorized" });
     }
 
     const customerId = req.params.id;
@@ -316,16 +320,7 @@ const deleteCustomer = async (req, res) => {
 
 //get customer profile
 const getCustomerProfile = async (req, res) => {
-    try {
-      const decodedCustomer = await verifyToken(req);
-      if (!decodedCustomer) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-      // const customer = await customer.findById(decodedCustomer.id);
-      // if (customer.role !== "customer") {
-      //   return res.status(401).json({ message: "Unauthorized role" });
-      // }
-      
+    try {      
       const customerId = req.params.id;
       if (decodedCustomer.id !== customerId) {
         return res.status(401).json({ message: "Unauthorized it's not ur profile" });
@@ -352,16 +347,7 @@ const getCustomerProfile = async (req, res) => {
 //update a Customer's Profile
 
 const updateCustomerProfile = async (req, res) => {
-  try {
-    const decodedUser = await verifyToken(req);
-    if (!decodedUser) {
-      return res.status(401).json({ message: "Unauthorized Customer" });
-    }
-    // const user = await User.findById(decodedUser.id);
-    // if (user.role !== "admin") {
-    //   return res.status(401).json({ message: "Unauthorized role" });
-    // }
-    
+  try {    
     const customerId = req.params.id;
     const customerUpdated = req.body;
 

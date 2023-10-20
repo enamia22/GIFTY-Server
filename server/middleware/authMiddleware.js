@@ -1,25 +1,18 @@
-const jwt = require("jsonwebtoken");
-const secretKey = "abracadabra";
-
-function verifyToken(req, res) {
-  let token = req.headers["authorization"];
-  let user;
-  if (!token) {
-    return res.status(403).json({ auth: false, message: "No token provided." });
+const adminOrManager = async (user) => {
+  if (user.role !== "admin" && user.role !== "manager") {
+    console.log("not authorized")
+    return false;
   }
+};
 
-  jwt.verify(token, secretKey, (err, decoded) => {
+const adminOnly = async (user) => {
+  if (user.role !== "admin") {
+    console.log("not authorized")
+    return false;
+  }
+};
 
-    if (err) {
-      return res
-        .status(401)
-        .json({ auth: false, message: "Failed to authenticate token." });
-    }
-    req.userId = decoded.id;
-    req.role = decoded.role;
-    user = decoded  
-  });
-  return user
-}
-
-module.exports = verifyToken;
+module.exports = {
+  adminOrManager,
+  adminOnly
+};

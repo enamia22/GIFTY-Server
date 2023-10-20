@@ -35,6 +35,10 @@ const customerSchema = new mongoose.Schema({
   },
   confirmationToken : {
     type: String,
+  },
+  role : {
+    type: String,
+    default:'customer'
   }
 });
 
