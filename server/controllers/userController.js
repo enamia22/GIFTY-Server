@@ -1,9 +1,92 @@
 const User = require("../models/User");
+const RefreshToken = require("../models/RefreshToken");
 const bcrypt = require("bcrypt");
 const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
+const crypto = require("crypto");
+const {generateAccessToken, verifyAccessToken} = require("../middleware/authMiddleware");
+
+// ==================== refresh token test =====================
+
+const jwt = require('jsonwebtoken');
 
 
+// Function to refresh the access token
+const refreshAccessToken = async (refreshToken) => {
+  // Verify the provided refresh token
+  const refreshTokenDocument = await RefreshToken.findOne({ value: refreshToken });
+
+  if (!refreshTokenDocument) {
+    throw new Error('Invalid refresh token.');
+  }
+
+  // Check if the refresh token has been revoked
+  if (refreshTokenDocument.revokedBy) {
+    throw new Error('Refresh token has been revoked.');
+  }
+
+  // Check if the refresh token has expired
+  if (refreshTokenDocument.expires < new Date()) {
+    throw new Error('Refresh token has expired.');
+  }
+  const {userId, role, email} = refreshTokenDocument;
+  // If the refresh token is valid, generate a new access token
+  return generateAccessToken(userId, email, role);
+};
+
+
+// Function to verify if the access token has expired
+const isAccessTokenExpired = (accessToken) => {
+  try {
+    const decoded = jwt.decode(accessToken);
+    const currentTime = Date.now() / 1000; // Convert to seconds
+    if(decoded.exp < currentTime || currentTime-5 <= decoded.exp <= currentTime){
+      return true;
+    }else{
+      return false;
+    }
+  } catch (error) {
+    return true; // Token decoding failed
+  }
+};
+
+
+
+
+// Implement functionality to revoke a refresh token if needed. For example, when a user logs out from a specific device.
+const revokeRefreshToken = async (tokenId, revokedByIp) => {
+  const refreshToken = await RefreshToken.findOne({ value: tokenId });
+  if (refreshToken) {
+    refreshToken.revokedByIp = revokedByIp;
+    refreshToken.revokedBy = new Date();
+    await refreshToken.save();
+  }
+};
+
+
+// Generate a random refresh token
+const generateRefreshToken = () => {
+  return crypto.randomBytes(40).toString('hex');
+};
+
+// Create and save a refresh token to the database
+const createRefreshToken = async (userId, email, role, createdByIp) => {
+  const value = generateRefreshToken();
+  const expires = new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000); // Set expiration to 7 days
+  const refreshToken = new RefreshToken({
+    value,
+    userId,
+    email, 
+    role,
+    expires,
+    createdByIp,
+    createdAt: new Date(),
+  });
+  await refreshToken.save();
+  return refreshToken;
+};
+
+// ==================== refresh token test =====================
 //Add User
 const addUser = async (req, res) => {
     try {
@@ -71,7 +154,8 @@ const loginUser = async (req, res) => {
       });
 
       const token = await valid.generateAuthToken();
-      res.status(200).json({ token: token, status: 200 });
+      const refreshToken = await createRefreshToken(valid._id, valid.email, valid.role, 'MustaphaIpAddress');
+      res.status(200).json({ token: token, refreshToken: refreshToken.value, status: 200 });
     }
   } catch (error) {
     console.log("Error with login: " + error);
@@ -107,6 +191,24 @@ const getAllUsers = async (req, res) => {
 }
 
 const findUserById = async (req, res) => {
+  
+  const token = req.headers["authorization"];
+  const refreshToken = req.headers["refreshtoken"];
+// Check if access token is expired
+if (isAccessTokenExpired(token)) {
+  try {
+    // Use the refresh token to get a new access token
+    const newAccessToken = await refreshAccessToken(refreshToken);
+    console.log('the access token has expired or is about to expire soon and this is the new access token: ' + newAccessToken)
+    // Update the access token in your Postman environment or application's state
+    // Make your request with the new access token
+  } catch (error) {
+    // Handle errors (e.g., invalid refresh token, expired refresh token)
+    console.error('Token refresh failed:', error.message);
+    // You may need to redirect to a login page or perform other actions
+  }
+}
+
   try {
     adminOrManager(req, res);
 

@@ -57,7 +57,7 @@ userSchema.plugin(mongoosePaginate);
 userSchema.methods.generateAuthToken = async function () {
     try {
       let token = jwt.sign({ id: this._id, email: this.email, role: this.role }, secretKey, {
-        expiresIn: "40h",
+        expiresIn: "15m",
       });
   
       return token;

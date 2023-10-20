@@ -48,7 +48,24 @@ const adminOnly = async (req, res) =>{
   }
  
 }
+
+const generateAccessToken = (userId, email, role) => {
+  const accessToken = jwt.sign({ userId, email, role }, secretKey, { expiresIn: '15m' });
+  return accessToken;
+};
+
+const verifyAccessToken = (token) => {
+  try {
+    const decoded = jwt.verify(token, secretKey);
+    return decoded;
+  } catch (err) {
+    return null;
+  }
+};
+
 module.exports = {
   adminOrManager,
-  adminOnly
+  adminOnly,
+  generateAccessToken,
+  verifyAccessToken
 };

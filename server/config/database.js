@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const config = require('./env')
 module.exports = async function mongoDBConnection() {
   await mongoose
-    .connect(config.DB_URI)
+    .connect(config.DB_URI_LOCAL)
     .then(() => console.log("connected to db"));
   return mongoose;
 };
