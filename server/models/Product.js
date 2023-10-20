@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const mongoosePaginate = require('mongoose-paginate-v2');
-const subcategoryModel = require('./Category.js');
+const subcategoryModel = require('./SubCategory.js');
 
 const productSchema = new mongoose.Schema({
   sku: {

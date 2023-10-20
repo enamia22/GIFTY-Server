@@ -1,16 +1,10 @@
 const Order = require("../models/Order");
 const User = require("../models/User");
-const { verifyToken } = require("../middleware/authMiddleware");
 const Product = require("../models/Product");
 const mongoose = require("mongoose");
 
 const addOrder = async (req, res) => {
   try {
-    const decodedUser = await verifyToken(req);
-    if (!decodedUser) {
-      return res.status(401).json({ message: "Not a customer yet" });
-    }
-
     let { customer_id, order_items } = req.body;
     async function getPrice(id) {
       const product = await Product.findById(id);
@@ -49,13 +43,10 @@ const addOrder = async (req, res) => {
 
 const getAllOrders = async (req, res) => {
   try {
-    const decodedUser = await verifyToken(req);
-    if (!decodedUser) {
-      return res.status(401).json({ message: "Not a customer yet" });
-    }
-    const user = await User.findById(decodedUser.id);
-    if (user.role !== "admin" && user.role !== "manager") {
-      return res.status(401).json({ message: "Unauthorized role" });
+    let authorized = await adminOrManager(req.validateToken);
+    console.log(authorized);
+    if (!authorized) {
+      res.status(403).json({ message: "Not authorized" });
     }
 
     const { page = 1, sort = "ASC" } = req.query;
@@ -110,15 +101,11 @@ const getAllOrders = async (req, res) => {
 
 const getOrderById = async (req, res) => {
   try {
-    const decodedUser = await verifyToken(req);
-    if (!decodedUser) {
-      return res.status(401).json({ message: "Not a customer yet" });
+    let authorized = await adminOrManager(req.validateToken);
+    console.log(authorized);
+    if (!authorized) {
+      res.status(403).json({ message: "Not authorized" });
     }
-    const user = await User.findById(decodedUser.id);
-    if (user.role !== "admin" && user.role !== "manager") {
-      return res.status(401).json({ message: "Unauthorized role" });
-    }
-
     const orderId = req.params.id;
 
     async function getCustomerInfo(customerId) {
@@ -181,13 +168,10 @@ const getOrderById = async (req, res) => {
 
 const updateOrder = async (req, res) => {
   try {
-    const decodedUser = await verifyToken(req);
-    if (!decodedUser) {
-      return res.status(401).json({ message: "Unauthorized user" });
-    }
-    const user = await User.findById(decodedUser.id);
-    if (user.role !== "admin" && user.role !== "manager") {
-      return res.status(401).json({ message: "Unauthorized role" });
+    let authorized = await adminOrManager(req.validateToken);
+    console.log(authorized);
+    if (!authorized) {
+      res.status(403).json({ message: "Not authorized" });
     }
 
     const orderId = req.params.id;

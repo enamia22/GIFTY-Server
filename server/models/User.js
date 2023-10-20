@@ -1,8 +1,5 @@
 const mongoose = require("mongoose");
-const jwt = require("jsonwebtoken");
-const mongoosePaginate = require('mongoose-paginate-v2');
-const config = require('../config/env')
-const secretKey = config.SECRET;
+const mongoosePaginate = require("mongoose-paginate-v2");
 
 const userSchema = new mongoose.Schema({
   firstName: {
@@ -12,7 +9,7 @@ const userSchema = new mongoose.Schema({
   username: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
   },
   lastName: {
     type: String,
@@ -29,43 +26,31 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    default: "manager"
+    default: "manager",
   },
   active: {
     type: Boolean,
-    default: true
+    default: true,
   },
   lastUpdate: {
-    type: Date
+    type: Date,
   },
   address: {
     type: String,
   },
   phone: {
-    type: Number
+    type: Number,
   },
   creationDate: {
-    type: Date, 
+    type: Date,
   },
   lastLogin: {
-    type: Date 
+    type: Date,
   },
 });
 
 userSchema.plugin(mongoosePaginate);
 
-userSchema.methods.generateAuthToken = async function () {
-    try {
-      let token = jwt.sign({ id: this._id, email: this.email, role: this.role }, secretKey, {
-        expiresIn: "15m",
-      });
-  
-      return token;
-    } catch (error) {
-      console.log("error while generating token");
-    }
-  };
-  
-  const User = mongoose.model("users", userSchema);
-  
-  module.exports = User;
+const User = mongoose.model("users", userSchema);
+
+module.exports = User;
