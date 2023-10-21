@@ -42,11 +42,11 @@ const addSubcategory = async (req, res) => {
 //get subcategories
 const getAllSubcategories = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
-    if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOrManager(req.validateToken);
+    // console.log(authorized);
+    // if (!authorized) {
+    //   res.status(403).json({ message: "Not authorized" });
+    // }
 
     const { page = 1, sort = "ASC" } = req.query;
     const limit = 10;
@@ -72,11 +72,11 @@ const getAllSubcategories = async (req, res) => {
 
 const findSubcategoryById = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
-    if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOrManager(req.validateToken);
+    // console.log(authorized);
+    // if (!authorized) {
+    //   res.status(403).json({ message: "Not authorized" });
+    // }
 
     const subcategoryId = req.params.id;
     const check = mongoose.Types.ObjectId.isValid(subcategoryId);
@@ -98,11 +98,11 @@ const findSubcategoryById = async (req, res) => {
 
 const findSubcategoryByQuery = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
-    if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOrManager(req.validateToken);
+    // console.log(authorized);
+    // if (!authorized) {
+    //   res.status(403).json({ message: "Not authorized" });
+    // }
 
     const query = req.query.query;
 

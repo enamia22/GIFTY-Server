@@ -16,9 +16,9 @@ const storage = multer.diskStorage({
 
 const router = express.Router();
 router.post("/", isTokenExpired, upload.single('productImage'), productsController.addProduct);
-router.get("/", isTokenExpired, productsController.getAllProducts);
-router.get("/search", isTokenExpired, productsController.findProductByQuery);
-router.get("/:id", isTokenExpired, productsController.findProductById);
+router.get("/", productsController.getAllProducts);
+router.get("/search", productsController.findProductByQuery);
+router.get("/:id", productsController.findProductById);
 router.patch("/:id", isTokenExpired, upload.single('productImage'), productsController.updateProduct);
 router.delete("/:id", isTokenExpired, productsController.deleteProduct);
 

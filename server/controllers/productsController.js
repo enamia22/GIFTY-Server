@@ -70,11 +70,11 @@ const addProduct = async (req, res) => {
 //get all Products
 const getAllProducts = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
-    if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOrManager(req.validateToken);
+    // console.log(authorized);
+    // if (!authorized) {
+    //   res.status(403).json({ message: "Not authorized" });
+    // }
 
     const { page = 1, sort = "ASC" } = req.query;
     const limit = 10;
@@ -124,11 +124,11 @@ const getAllProducts = async (req, res) => {
 
 const findProductById = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
-    if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOrManager(req.validateToken);
+    // console.log(authorized);
+    // if (!authorized) {
+    //   res.status(403).json({ message: "Not authorized" });
+    // }
 
     const productId = req.params.id;
     const check = mongoose.Types.ObjectId.isValid(productId);
@@ -164,11 +164,11 @@ const findProductById = async (req, res) => {
 
 const findProductByQuery = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
-    if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOrManager(req.validateToken);
+    // console.log(authorized);
+    // if (!authorized) {
+    //   res.status(403).json({ message: "Not authorized" });
+    // }
 
     const query = req.query.query;
     const { page = 1, sort = "ASC" } = req.query;
