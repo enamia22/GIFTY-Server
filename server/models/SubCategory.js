@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const mongoosePaginate = require('mongoose-paginate-v2');
 const categoryModel = require('./Category.js');
-const categorySchema = new mongoose.Schema({
+const subCategorySchema = new mongoose.Schema({
   subcategoryName: {
     type: String,
     required: true,
@@ -25,9 +25,9 @@ const categorySchema = new mongoose.Schema({
   },
 });
 
-categorySchema.plugin(mongoosePaginate);
+subCategorySchema.plugin(mongoosePaginate);
 
   
-const Category = mongoose.model("subcategories", categorySchema);
+const SubCategory = mongoose.model("subcategories", subCategorySchema);
 
-module.exports = Category;
+module.exports = SubCategory;

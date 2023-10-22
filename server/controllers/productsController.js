@@ -1,5 +1,5 @@
 const Product = require("../models/Product");
-const Category = require("../models/Category");
+const SubCategory = require("../models/SubCategory");
 const { adminOrManager } = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
 var uniqid = require("uniqid");
@@ -8,7 +8,7 @@ var uniqid = require("uniqid");
 const addProduct = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
+    // return console.log(req.validateToken);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
     }
@@ -25,6 +25,7 @@ const addProduct = async (req, res) => {
       price,
       discountPrice,
       options,
+      pack
     } = req.body;
 
     if (
@@ -55,6 +56,7 @@ const addProduct = async (req, res) => {
       price,
       discountPrice,
       options,
+      pack,
       creationDate: currentDate, // Set the creationDate field to the current timestamp
     });
 
@@ -70,12 +72,14 @@ const addProduct = async (req, res) => {
 //get all Products
 const getAllProducts = async (req, res) => {
   try {
-    // let authorized = await adminOrManager(req.validateToken);
-    // console.log(authorized);
-    // if (!authorized) {
-    //   res.status(403).json({ message: "Not authorized" });
-    // }
+    let authorized = false;
 
+    if(req.validateToken){
+      const checkIfAuthorized = await adminOrManager(req.validateToken);
+      if(checkIfAuthorized){
+        authorized = true;
+      }
+    }
     const { page = 1, sort = "ASC" } = req.query;
     const limit = 10;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
@@ -90,18 +94,44 @@ const getAllProducts = async (req, res) => {
         sort: sortOption,
         select: fieldsToRetrieve,
       };
-      const result = await Product.paginate({}, options);
+      
+      let query = {};
+      
+      if (!authorized) {
+        // For not authorized users, filter by status true
+        query.active = true;
+      }
+      
+      const result = await Product.paginate(query, options);
 
       async function getSubCatName(item) {
-        const subcategory = await Category.findById(item);
-        const subcategoryName = subcategory.subcategoryName;
-        return subcategoryName;
+        try {
+          const check = mongoose.Types.ObjectId.isValid(item);
+          if(check){
+            const subcategory = await SubCategory.findById(item);
+            if (subcategory) {
+              const subcategoryName = subcategory.subcategoryName;
+              return subcategoryName;
+            } else {
+              return null; // Handle the case where the document is not found
+            }
+          }else{
+            return null
+          }
+
+        } catch (error) {
+          console.error("Error while retrieving subcategory:", error);
+          return null; // Handle the error
+        }
       }
+      
       async function updateArray(array) {
         const promises = array.map(async (item) => ({
           ...item._doc,
-          subcategoryName: await getSubCatName(item._doc.subcategoryId),
+          subcategoryName: await getSubCatName(item.subcategoryId),
+          hello: 'hello'
         }));
+
 
         return Promise.all(promises);
       }
@@ -124,19 +154,29 @@ const getAllProducts = async (req, res) => {
 
 const findProductById = async (req, res) => {
   try {
-    // let authorized = await adminOrManager(req.validateToken);
-    // console.log(authorized);
-    // if (!authorized) {
-    //   res.status(403).json({ message: "Not authorized" });
-    // }
+    let authorized = false;
 
+    if(req.validateToken){
+      const checkIfAuthorized = await adminOrManager(req.validateToken);
+      if(checkIfAuthorized){
+        authorized = true;
+      }
+    }
     const productId = req.params.id;
     const check = mongoose.Types.ObjectId.isValid(productId);
     if (check) {
-      const product = await Product.findById(productId);
+      let query = { _id: productId };
+
+      if (!authorized) {
+        // For not authorized users, filter by status true
+        query.active = true;
+      }
+      
+      const product = await Product.findOne(query);
+
       if (product) {
         async function getSubCatName(item) {
-          const subcategory = await Category.findById(item);
+          const subcategory = await SubCategory.findById(item);
           const subcategoryName = subcategory.subcategoryName;
           return subcategoryName;
         }
@@ -164,11 +204,14 @@ const findProductById = async (req, res) => {
 
 const findProductByQuery = async (req, res) => {
   try {
-    // let authorized = await adminOrManager(req.validateToken);
-    // console.log(authorized);
-    // if (!authorized) {
-    //   res.status(403).json({ message: "Not authorized" });
-    // }
+    let authorized = false;
+
+    if(req.validateToken){
+      const checkIfAuthorized = await adminOrManager(req.validateToken);
+      if(checkIfAuthorized){
+        authorized = true;
+      }
+    }
 
     const query = req.query.query;
     const { page = 1, sort = "ASC" } = req.query;
@@ -185,9 +228,14 @@ const findProductByQuery = async (req, res) => {
       sort: sortOption,
       select: fieldsToRetrieve,
     };
-
+      
     // Define the query to filter products based on the productName using regex
-    const queryRegex = { productName: { $regex: query, $options: "i" } };
+    const queryRegex = { productName: { $regex: query, $options: "i" }, };
+
+    if (!authorized) {
+      // For not authorized users, filter by status true
+      queryRegex.active = true;
+    }
 
     // Use Product.paginate to retrieve paginated data with projection
     const result = await Product.paginate(queryRegex, options);
@@ -195,7 +243,7 @@ const findProductByQuery = async (req, res) => {
     // const results = await Product.find({ productName: { $regex: query, $options: 'i' } });
 
     async function getSubCatName(item) {
-      const subcategory = await Category.findById(item);
+      const subcategory = await SubCategory.findById(item);
       const subcategoryName = subcategory.subcategoryName;
       return subcategoryName;
     }

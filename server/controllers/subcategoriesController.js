@@ -1,4 +1,4 @@
-const Category = require("../models/SubCategory");
+const SubCategory = require("../models/SubCategory");
 const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
 
@@ -16,13 +16,13 @@ const addSubcategory = async (req, res) => {
       res.status(200).send({ message: "missing field" });
     }
 
-    const existingCategory = await Category.findOne({ subcategoryName });
+    const existingCategory = await SubCategory.findOne({ subcategoryName });
     if (existingCategory) {
       return res.status(400).json({ error: "subcategory already exits" });
     }
     const currentDate = new Date();
 
-    const newCategory = new Category({
+    const newCategory = new SubCategory({
       subcategoryName,
       categoryId,
       active,
@@ -59,7 +59,7 @@ const getAllSubcategories = async (req, res) => {
         sort: sortOption,
       };
 
-      const result = await Category.paginate({}, options);
+      const result = await SubCategory.paginate({}, options);
       return res.json(result);
     } catch (error) {
       return res.status(500).json({ error: "Error retrieving data" });
@@ -81,7 +81,7 @@ const findSubcategoryById = async (req, res) => {
     const subcategoryId = req.params.id;
     const check = mongoose.Types.ObjectId.isValid(subcategoryId);
     if (check) {
-      const subcategory = await Category.findById(subcategoryId);
+      const subcategory = await SubCategory.findById(subcategoryId);
       if (subcategory) {
         res.json(subcategory);
       } else {
@@ -106,7 +106,7 @@ const findSubcategoryByQuery = async (req, res) => {
 
     const query = req.query.query;
 
-    const results = await Category.find({
+    const results = await SubCategory.find({
       subcategoryName: { $regex: query, $options: "i" },
     });
 
@@ -132,9 +132,9 @@ const updateSubcategory = async (req, res) => {
 
     const check = mongoose.Types.ObjectId.isValid(subcategoryId);
     if (check) {
-      const user = await Category.findById(subcategoryId).select("-password");
-      if (user) {
-        const existingCategory = await Category.findOne({
+      const subCategory = await SubCategory.findById(subcategoryId)
+      if (subCategory) {
+        const existingCategory = await SubCategory.findOne({
           $and: [
             { $or: [{ subcategoryName: subcategoryUpdated.subcategoryName }] },
             { _id: { $ne: subcategoryId } }, // search in all users except the current one
@@ -143,7 +143,7 @@ const updateSubcategory = async (req, res) => {
 
         if (existingCategory)
           return res.status(400).json({ error: "subcategory already exits" });
-        const subcategory = await Category.findByIdAndUpdate(
+        const subcategory = await SubCategory.findByIdAndUpdate(
           subcategoryId,
           subcategoryUpdated,
           {
@@ -175,7 +175,7 @@ const deleteSubcategory = async (req, res) => {
 
     const check = mongoose.Types.ObjectId.isValid(subcategoryId);
     if (check) {
-      const subcategory = await Category.findByIdAndDelete(subcategoryId);
+      const subcategory = await SubCategory.findByIdAndDelete(subcategoryId);
       if (subcategory) {
         res.send("subcategory deleted successfully");
       } else {
