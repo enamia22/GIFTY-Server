@@ -157,7 +157,7 @@ const findSubcategoryByQuery = async (req, res) => {
 
 const updateSubcategory = async (req, res) => {
   try {
-    let authorized = await adminOnly(req.validateToken);
+    let authorized = await adminOrManager(req.validateToken);
     console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
@@ -203,7 +203,7 @@ const updateSubcategory = async (req, res) => {
 
 const deleteSubcategory = async (req, res) => {
   try {
-    let authorized = await adminOnly(req.validateToken);
+    let authorized = await adminOrManager(req.validateToken);
     console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
