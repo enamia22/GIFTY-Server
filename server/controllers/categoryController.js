@@ -1,5 +1,6 @@
 const Category = require("../models/Category");
 const mongoose = require("mongoose");
+const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
 
 const addCategory = async (req, res) => {
   try {
@@ -39,11 +40,14 @@ const addCategory = async (req, res) => {
 
 const getAllCategories = async (req, res) => {
   try {
-    // let authorized = await adminOrManager(req.validateToken);
-    // console.log(authorized);
-    // if (!authorized) {
-    //   res.status(403).json({ message: "Not authorized" });
-    // }
+    let authorized = false;
+
+    if(req.validateToken){
+      const checkIfAuthorized = await adminOrManager(req.validateToken);
+      if(checkIfAuthorized){
+        authorized = true;
+      }
+    }
 
     const { page = 1, sort = "ASC" } = req.query;
     const limit = 10;
@@ -55,8 +59,14 @@ const getAllCategories = async (req, res) => {
         limit: limit,
         sort: sortOption,
       };
+      let query = {};
+      
+      if (!authorized) {
+        // For not authorized users, filter by status true
+        query.active = true;
+      }
 
-      const result = await Category.paginate({}, options);
+      const result = await Category.paginate(query, options);
       return res.json(result);
     } catch (error) {
       return res.status(500).json({ error: "Error retrieving data" });
@@ -68,17 +78,36 @@ const getAllCategories = async (req, res) => {
 
 const findCategoryByQuery = async (req, res) => {
   try {
-    // let authorized = await adminOrManager(req.validateToken);
-    // console.log(authorized);
-    // if (!authorized) {
-    //   res.status(403).json({ message: "Not authorized" });
-    // }
+    let authorized = false;
+
+    if(req.validateToken){
+      const checkIfAuthorized = await adminOrManager(req.validateToken);
+      if(checkIfAuthorized){
+        authorized = true;
+      }
+    }
 
     const query = req.query.query;
+    const { page = 1, sort = "ASC" } = req.query;
+    const limit = 10;
+    const sortOption = sort === "DESC" ? "-_id" : "_id";
 
-    const results = await Category.find({
-      categoryName: { $regex: query, $options: "i" },
-    });
+    const options = {
+      page: page,
+      limit: limit,
+      sort: sortOption,
+    };
+      
+    // Define the query to filter categories based on the categoryName using regex
+    const queryRegex = { categoryName: { $regex: query, $options: "i" }, };
+
+    if (!authorized) {
+      // For not authorized users, filter by status true
+      queryRegex.active = true;
+    }
+
+    const results = await Category.paginate(queryRegex, options);
+
 
     res.json(results);
   } catch (error) {
@@ -89,16 +118,25 @@ const findCategoryByQuery = async (req, res) => {
 
 const findCategoryById = async (req, res) => {
   try {
-    // let authorized = await adminOrManager(req.validateToken);
-    // console.log(authorized);
-    // if (!authorized) {
-    //   res.status(403).json({ message: "Not authorized" });
-    // }
+    let authorized = false;
 
+    if(req.validateToken){
+      const checkIfAuthorized = await adminOrManager(req.validateToken);
+      if(checkIfAuthorized){
+        authorized = true;
+      }
+    }
     const categoryId = req.params.id;
     const check = mongoose.Types.ObjectId.isValid(categoryId);
     if (check) {
-      const category = await Category.findById(categoryId);
+      let query = { _id: categoryId };
+
+      if (!authorized) {
+        // For not authorized users, filter by status true
+        query.active = true;
+      }
+
+      const category = await Category.findOne(query);
       if (category) {
         res.json(category);
       } else {

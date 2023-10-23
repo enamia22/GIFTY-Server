@@ -3,20 +3,24 @@ const SubCategory = require("../models/SubCategory");
 const { adminOrManager } = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
 var uniqid = require("uniqid");
+const { validationResult } = require('express-validator');
+const { sanitizeRequestBody } = require('../middleware/dataValidation');
 
 //Add Subcategory
 const addProduct = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    // return console.log(req.validateToken);
+
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
+
     let imageProduct;
 
     if (req.file) {
       imageProduct = req.file.path;
     }
+
     let {
       productName,
       shortDescription,
@@ -28,46 +32,52 @@ const addProduct = async (req, res) => {
       pack
     } = req.body;
 
-    if (
-      !productName ||
-      !shortDescription ||
-      !longDescription ||
-      !subcategoryId ||
-      !price ||
-      !discountPrice ||
-      !options
-    ) {
-      res.status(200).send({ message: "missing field" });
+    // Validation: Check if required fields are missing
+    if (!productName || !shortDescription || !longDescription || !subcategoryId || !price || !discountPrice || !options) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    const createProduct = sanitizeRequestBody(req);    
+    // If there are validation errors, return a response with the errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    
+    const existingProduct = await Product.findOne({ productName });
+
+    if (existingProduct) {
+      return res.status(400).json({ error: "Product already exists" });
     }
 
-    const existingProduct = await Product.findOne({ productName });
-    if (existingProduct) {
-      return res.status(400).json({ error: "Product already exits" });
-    }
     const currentDate = new Date();
 
     const newProduct = new Product({
       sku: uniqid(),
-      productName,
+      productName: createProduct.productName,
       productImage: imageProduct,
-      shortDescription,
-      longDescription,
-      subcategoryId,
-      price,
-      discountPrice,
-      options,
-      pack,
-      creationDate: currentDate, // Set the creationDate field to the current timestamp
+      shortDescription: createProduct.shortDescription,
+      longDescription: createProduct.shortDescription,
+      subcategoryId: createProduct.subcategoryId,
+      price: createProduct.price,
+      discountPrice: createProduct.discountPrice,
+      options: createProduct.options,
+      pack: createProduct.pack,
+      creationDate: currentDate,
     });
 
     const createdProduct = await newProduct.save();
-    if (!createdProduct) return res.json({ message: "Product not created" });
-    res.status(201).json({ message: "Product created with success" });
+
+    if (!createdProduct) {
+      return res.status(500).json({ message: "Product not created" });
+    }
+
+    return res.status(201).json({ message: "Product created with success" });
   } catch (error) {
     console.log("Error while adding new Product: " + error);
-    res.status(500).send(error.message);
+    return res.status(500).json({ error: error.message });
   }
 };
+
 
 //get all Products
 const getAllProducts = async (req, res) => {
@@ -282,7 +292,14 @@ const updateProduct = async (req, res) => {
       imageProduct = req.file.path;
     }
     const productId = req.params.id;
-    const productUpdated = req.body;
+
+    const productUpdated = sanitizeRequestBody(req);    
+    // If there are validation errors, return a response with the errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    
     productUpdated.productImage = imageProduct;
 
     productUpdated.lastUpdate = new Date();

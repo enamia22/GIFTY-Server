@@ -1,12 +1,17 @@
 const mongoDBConnection = require("./config/database");
 const express = require("express");
-require("dotenv").config();
-const PORT = process.env.PORT || 3001;
 const bodyParser = require("body-parser");
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+
+require('dotenv').config()
+
+const PORT = process.env.PORT;
+// connect to database
+mongoDBConnection();
 
 //import routers
 const userRouter = require("./routes/userRoutes");
@@ -16,8 +21,6 @@ const productRouter = require("./routes/productsRoutes");
 const subcategoriesRouter = require("./routes/subcategoriesRoutes");
 const customersRouter = require("./routes/customersRoutes");
 
-// connect to database
-mongoDBConnection();
 
 // use routers
 app.use("/v1/users", userRouter);

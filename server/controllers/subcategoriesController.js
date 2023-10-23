@@ -42,11 +42,14 @@ const addSubcategory = async (req, res) => {
 //get subcategories
 const getAllSubcategories = async (req, res) => {
   try {
-    // let authorized = await adminOrManager(req.validateToken);
-    // console.log(authorized);
-    // if (!authorized) {
-    //   res.status(403).json({ message: "Not authorized" });
-    // }
+    let authorized = false;
+
+    if(req.validateToken){
+      const checkIfAuthorized = await adminOrManager(req.validateToken);
+      if(checkIfAuthorized){
+        authorized = true;
+      }
+    }
 
     const { page = 1, sort = "ASC" } = req.query;
     const limit = 10;
@@ -58,8 +61,15 @@ const getAllSubcategories = async (req, res) => {
         limit: limit,
         sort: sortOption,
       };
+      
+      let query = {};
+      
+      if (!authorized) {
+        // For not authorized users, filter by status true
+        query.active = true;
+      }
 
-      const result = await SubCategory.paginate({}, options);
+      const result = await SubCategory.paginate(query, options);
       return res.json(result);
     } catch (error) {
       return res.status(500).json({ error: "Error retrieving data" });
@@ -72,16 +82,26 @@ const getAllSubcategories = async (req, res) => {
 
 const findSubcategoryById = async (req, res) => {
   try {
-    // let authorized = await adminOrManager(req.validateToken);
-    // console.log(authorized);
-    // if (!authorized) {
-    //   res.status(403).json({ message: "Not authorized" });
-    // }
+    let authorized = false;
+
+    if(req.validateToken){
+      const checkIfAuthorized = await adminOrManager(req.validateToken);
+      if(checkIfAuthorized){
+        authorized = true;
+      }
+    }
 
     const subcategoryId = req.params.id;
     const check = mongoose.Types.ObjectId.isValid(subcategoryId);
     if (check) {
-      const subcategory = await SubCategory.findById(subcategoryId);
+      let query = { _id: subcategoryId };
+
+      if (!authorized) {
+        // For not authorized users, filter by status true
+        query.active = true;
+      }
+      const subcategory = await SubCategory.findOne(query);
+
       if (subcategory) {
         res.json(subcategory);
       } else {
@@ -98,17 +118,35 @@ const findSubcategoryById = async (req, res) => {
 
 const findSubcategoryByQuery = async (req, res) => {
   try {
-    // let authorized = await adminOrManager(req.validateToken);
-    // console.log(authorized);
-    // if (!authorized) {
-    //   res.status(403).json({ message: "Not authorized" });
-    // }
+    let authorized = false;
+
+    if(req.validateToken){
+      const checkIfAuthorized = await adminOrManager(req.validateToken);
+      if(checkIfAuthorized){
+        authorized = true;
+      }
+    }
 
     const query = req.query.query;
+    const { page = 1, sort = "ASC" } = req.query;
+    const limit = 10;
+    const sortOption = sort === "DESC" ? "-_id" : "_id";
 
-    const results = await SubCategory.find({
-      subcategoryName: { $regex: query, $options: "i" },
-    });
+    const options = {
+      page: page,
+      limit: limit,
+      sort: sortOption,
+    };
+      
+    // Define the query to filter subcategories based on the subcategoryName using regex
+    const queryRegex = { subcategoryName: { $regex: query, $options: "i" }, };
+
+    if (!authorized) {
+      // For not authorized users, filter by status true
+      queryRegex.active = true;
+    }
+
+    const results = await SubCategory.paginate(queryRegex, options);
 
     res.json(results);
   } catch (error) {

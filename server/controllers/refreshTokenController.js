@@ -1,8 +1,9 @@
 const RefreshToken = require("../models/RefreshToken");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const config = require("../config/env");
-const secretKey = config.SECRET;
+require('dotenv').config()
+
+const secretKey = process.env.SECRET;
 
 const generateAccessToken = (userId, email, role) => {
   const accessToken = jwt.sign({ userId, email, role }, secretKey, {
