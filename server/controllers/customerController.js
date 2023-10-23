@@ -1,4 +1,6 @@
 const Customer = require("../models/Customer");
+const Product = require("../models/Product"); // Import your product model
+
 const nodemailer = require("nodemailer");
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
@@ -403,7 +405,7 @@ const customer = await Customer.findById(id);
 
 
 }
-    
+
 
 
   module.exports = {
@@ -416,5 +418,5 @@ const customer = await Customer.findById(id);
     deleteCustomer,
     getCustomerProfile,
     updateCustomerProfile,
-    validateProfile
+    validateProfile,
   };
