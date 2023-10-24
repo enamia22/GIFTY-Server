@@ -44,18 +44,6 @@ const customerSchema = new mongoose.Schema({
 
 customerSchema.plugin(mongoosePaginate);
 
-customerSchema.methods.generateAuthToken = async function () {
-    try {
-      let token = jwt.sign({ id: this._id, email: this.email}, "abracadabra", {
-        expiresIn: "40h",
-      });
-  
-      return token;
-    } catch (error) {
-      console.log("error while generating token");
-    }
-  };
-
   
   const Customer = mongoose.model("customers", customerSchema);
   
