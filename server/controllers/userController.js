@@ -6,6 +6,8 @@ const {
   createRefreshToken,
   generateAccessToken,
 } = require("../controllers/refreshTokenController");
+const { trackActivity } = require("../middleware/activityMiddleware");
+
 
 //Add User
 const addUser = async (req, res) => {
@@ -51,6 +53,10 @@ const addUser = async (req, res) => {
       createdUser.role,
       "MustaphaIpAddress"
     );
+    const addActivity = await trackActivity(req.validateToken.userId, 'add user', createdUser._id, username);
+    if(!addActivity){
+      console.log("activity not added: ");
+    }
     res
       .status(200)
       .json({ token: token, refreshToken: refreshToken.value, status: 200 });
@@ -205,9 +211,16 @@ const updateUser = async (req, res) => {
 
         if (existingUser)
           return res.status(400).json({ error: "User already exits" });
+
         const user = await User.findByIdAndUpdate(userId, userUpdated, {
           new: true,
         });
+
+        const addActivity = await trackActivity(req.validateToken.userId, 'update user', userId, user.username);
+        if(!addActivity){
+          console.log("activity not added: ");
+        }
+
         res.json({ "user updated successfully": user });
       } else {
         res.send("not found");
@@ -235,6 +248,10 @@ const deleteUser = async (req, res) => {
     if (check) {
       const user = await User.findByIdAndDelete(userId);
       if (user) {
+        const addActivity = await trackActivity(req.validateToken.userId, 'delete user', userId, user.username);
+        if(!addActivity){
+          console.log("activity not added: ");
+        }
         res.send("user deleted successfully");
       } else {
         res.send("not found");

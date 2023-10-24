@@ -1,6 +1,7 @@
 const SubCategory = require("../models/SubCategory");
 const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
+const { trackActivity } = require("../middleware/activityMiddleware");
 
 //Add Subcategory
 const addSubcategory = async (req, res) => {
@@ -32,6 +33,11 @@ const addSubcategory = async (req, res) => {
     const createdCategory = await newCategory.save();
     if (!createdCategory)
       return res.json({ message: "subcategory not created" });
+
+    const addActivity = await trackActivity(req.validateToken.userId, 'add subcategory', createdCategory._id, subcategoryName);
+    if(!addActivity){
+      console.log("activity not added: ");
+    }
     res.json({ message: "subcategory created with success" });
   } catch (error) {
     console.log("Error while adding new subcategory: " + error);
@@ -188,7 +194,16 @@ const updateSubcategory = async (req, res) => {
             new: true,
           }
         );
-        res.json({ "subcategory updated successfuly": subcategory });
+        if(subcategory){
+          console.log(req.validateToken.userId, 'update subcategory', subcategoryId, subCategory.subcategoryName)
+          const addActivity = await trackActivity(req.validateToken.userId, 'update subcategory', subcategoryId, subCategory.subcategoryName);
+          if(!addActivity){
+            console.log("activity not added: ");
+          }
+          res.json({ "subcategory updated successfuly": subcategory });
+        }else{
+          res.send("subcategory not updated");
+        }
       } else {
         res.send("not found");
       }
@@ -215,6 +230,10 @@ const deleteSubcategory = async (req, res) => {
     if (check) {
       const subcategory = await SubCategory.findByIdAndDelete(subcategoryId);
       if (subcategory) {
+        const addActivity = await trackActivity(req.validateToken.userId, 'delete subcategory', subcategoryId, subcategory.subcategoryName);
+        if(!addActivity){
+          console.log("activity not added: ");
+        }
         res.send("subcategory deleted successfully");
       } else {
         res.send("not found");
