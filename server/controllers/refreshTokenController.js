@@ -1,7 +1,7 @@
 const RefreshToken = require("../models/RefreshToken");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-require('dotenv').config()
+require("dotenv").config();
 
 const secretKey = process.env.SECRET;
 
@@ -15,7 +15,6 @@ const generateAccessToken = (userId, email, role) => {
 
 //verifyAccessTokenValidation
 const verifyAccessToken = (accessToken) => {
-
   const options = {
     ignoreExpiration: true,
   };
@@ -34,6 +33,7 @@ const generateRefreshToken = () => {
 
 // Function to refresh the access token
 const refreshAccessToken = async (refreshToken) => {
+  
   // Verify the provided refresh token
   const refreshTokenDocument = await RefreshToken.findOne({
     value: refreshToken,
@@ -60,12 +60,11 @@ const refreshAccessToken = async (refreshToken) => {
 // Function to verify if the access token has expired
 const isAccessTokenExpired = (accessToken) => {
   try {
-
     const decoded = verifyAccessToken(accessToken);
     const currentTime = Date.now() / 1000; // Convert to seconds
     if (decoded.exp < currentTime || decoded.exp - currentTime <= 300) {
-    return { ...decoded, expired: true };
-  } else {
+      return { ...decoded, expired: true };
+    } else {
       return { ...decoded, expired: false };
     }
   } catch (error) {
@@ -85,9 +84,15 @@ const revokeRefreshToken = async (tokenId, revokedByIp) => {
 
 const createRefreshToken = async (userId, email, role, createdByIp) => {
   const existRefreshToken = await RefreshToken.findOne({ email });
-  if(existRefreshToken){
-    return updateRefreshToken(existRefreshToken._id, userId, email, role, createdByIp);
-  }else{
+  if (existRefreshToken) {
+    return updateRefreshToken(
+      existRefreshToken._id,
+      userId,
+      email,
+      role,
+      createdByIp
+    );
+  } else {
     const value = generateRefreshToken();
     const expires = new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000); // Set expiration to 7 days
     const refreshToken = new RefreshToken({
@@ -102,9 +107,14 @@ const createRefreshToken = async (userId, email, role, createdByIp) => {
     await refreshToken.save();
     return refreshToken;
   }
-  
 };
-const updateRefreshToken = async (refreshTokenId, userId, email, role, createdByIp) => {
+const updateRefreshToken = async (
+  refreshTokenId,
+  userId,
+  email,
+  role,
+  createdByIp
+) => {
   const value = generateRefreshToken();
   const expires = new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000); // Set expiration to 7 days
   const updatedRefreshToken = {
@@ -116,15 +126,19 @@ const updateRefreshToken = async (refreshTokenId, userId, email, role, createdBy
     createdByIp,
     createdAt: new Date(),
   };
-  const refreshToken = await RefreshToken.findByIdAndUpdate(refreshTokenId, updatedRefreshToken, {
-    new: true,
-  });
+  const refreshToken = await RefreshToken.findByIdAndUpdate(
+    refreshTokenId,
+    updatedRefreshToken,
+    {
+      new: true,
+    }
+  );
   return refreshToken;
 };
 
 const isTokenExpired = async (req, res, next) => {
-  const token = req.headers["authorization"];
-  const refreshToken = req.headers["refreshtoken"];
+  const token = req.cookies.token;
+  const refreshToken = req.cookies.refreshToken;
   const decodedWithValue = isAccessTokenExpired(token);
   req.validateToken = decodedWithValue;
   // Check if access token is expired
@@ -132,7 +146,10 @@ const isTokenExpired = async (req, res, next) => {
     try {
       // Use the refresh token to get a new access token
       const newAccessToken = await refreshAccessToken(refreshToken);
-    //  console.log(newAccessToken);
+      if (newAccessToken) {
+        res.cookie("token", newAccessToken);
+      }
+      // console.log(newAccessToken);
       // Update the access token in your Postman environment or application's state
       // Make your request with the new access token
     } catch (error) {
@@ -151,5 +168,5 @@ module.exports = {
   refreshAccessToken,
   isTokenExpired,
   generateAccessToken,
-  updateRefreshToken
+  updateRefreshToken,
 };

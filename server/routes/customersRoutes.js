@@ -14,7 +14,7 @@ router.put("/:id", isTokenExpired, customerController.updateCustomer);
 router.delete("/:id", isTokenExpired, customerController.deleteCustomer);
 router.get("/profile/:id", isTokenExpired, customerController.findCustomerById);
 router.patch("/update/profile/:id", isTokenExpired, customerController.updateCustomer);
-router.put("/validate/:id/:token", isTokenExpired, customerController.validateProfile);
+router.get("/validate/:id/:token", customerController.validateProfile);
 
 
 module.exports = router ;

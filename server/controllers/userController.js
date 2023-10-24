@@ -1,13 +1,12 @@
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
-const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
+const { adminOnly } = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
 const {
   createRefreshToken,
   generateAccessToken,
 } = require("../controllers/refreshTokenController");
 const { trackActivity } = require("../middleware/activityMiddleware");
-
 
 //Add User
 const addUser = async (req, res) => {
@@ -46,20 +45,21 @@ const addUser = async (req, res) => {
 
     // const token = await newUser.generateAuthToken();
     const createdUser = await newUser.save();
-    const token = generateAccessToken(createdUser._id, createdUser.email, createdUser.role);
-    const refreshToken = await createRefreshToken(
-      createdUser._id,
-      createdUser.email,
-      createdUser.role,
-      "MustaphaIpAddress"
-    );
-    const addActivity = await trackActivity(req.validateToken.userId, 'add user', createdUser._id, username);
-    if(!addActivity){
-      console.log("activity not added: ");
+
+    if (createdUser) {
+      const addActivity = await trackActivity(
+        req.validateToken.userId,
+        "add user",
+        createdUser._id,
+        username
+      );
+      if (!addActivity) {
+        console.log("activity not added: ");
+      }
+      res.status(200).json({ message: "User created successfully" });
+    } else {
+      res.status(403).json({ message: "Failed to create User" });
     }
-    res
-      .status(200)
-      .json({ token: token, refreshToken: refreshToken.value, status: 200 });
   } catch (error) {
     console.log("Error in registration: " + error);
     res.status(500).send(error.message);
@@ -96,6 +96,8 @@ const loginUser = async (req, res) => {
         user.role,
         "MustaphaIpAddress"
       );
+      res.cookie("token", token);
+      res.cookie("refreshToken", refreshToken.value);
       res
         .status(200)
         .json({ token: token, refreshToken: refreshToken.value, status: 200 });
@@ -109,7 +111,7 @@ const loginUser = async (req, res) => {
 //get users
 const getAllUsers = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
+    let authorized = await adminOnly(req.validateToken);
     console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
@@ -139,7 +141,7 @@ const getAllUsers = async (req, res) => {
 
 const findUserById = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
+    let authorized = await adminOnly(req.validateToken);
     console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
@@ -164,7 +166,7 @@ const findUserById = async (req, res) => {
 
 const findUserByQuery = async (req, res) => {
   try {
-    let authorized = adminOrManager(req.validateToken);
+    let authorized = adminOnly(req.validateToken);
     console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
@@ -216,8 +218,13 @@ const updateUser = async (req, res) => {
           new: true,
         });
 
-        const addActivity = await trackActivity(req.validateToken.userId, 'update user', userId, user.username);
-        if(!addActivity){
+        const addActivity = await trackActivity(
+          req.validateToken.userId,
+          "update user",
+          userId,
+          user.username
+        );
+        if (!addActivity) {
           console.log("activity not added: ");
         }
 
@@ -248,8 +255,13 @@ const deleteUser = async (req, res) => {
     if (check) {
       const user = await User.findByIdAndDelete(userId);
       if (user) {
-        const addActivity = await trackActivity(req.validateToken.userId, 'delete user', userId, user.username);
-        if(!addActivity){
+        const addActivity = await trackActivity(
+          req.validateToken.userId,
+          "delete user",
+          userId,
+          user.username
+        );
+        if (!addActivity) {
           console.log("activity not added: ");
         }
         res.send("user deleted successfully");
