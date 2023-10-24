@@ -1,19 +1,21 @@
 const RefreshToken = require("../models/RefreshToken");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const config = require("../config/env");
-const secretKey = config.SECRET;
+require('dotenv').config()
+
+const secretKey = process.env.SECRET;
 
 const generateAccessToken = (userId, email, role) => {
   const accessToken = jwt.sign({ userId, email, role }, secretKey, {
     expiresIn: "15m",
   });
+  console.log(accessToken);
   return accessToken;
 };
 
 //verifyAccessTokenValidation
 const verifyAccessToken = (accessToken) => {
-  console.log(accessToken);
+
   const options = {
     ignoreExpiration: true,
   };
@@ -21,7 +23,6 @@ const verifyAccessToken = (accessToken) => {
     const decoded = jwt.verify(accessToken, secretKey, options);
     return decoded;
   } catch (err) {
-    console.log("notDecoded");
     return null;
   }
 };
@@ -59,17 +60,15 @@ const refreshAccessToken = async (refreshToken) => {
 // Function to verify if the access token has expired
 const isAccessTokenExpired = (accessToken) => {
   try {
+
     const decoded = verifyAccessToken(accessToken);
     const currentTime = Date.now() / 1000; // Convert to seconds
     if (decoded.exp < currentTime || decoded.exp - currentTime <= 300) {
-      console.log("expired");
-      return { decoded, expired: true };
-    } else {
-      console.log("not expired");
-      return { decoded, expired: false };
+    return { ...decoded, expired: true };
+  } else {
+      return { ...decoded, expired: false };
     }
   } catch (error) {
-    console.log("error expiration");
     return true;
   }
 };
@@ -127,12 +126,14 @@ const isTokenExpired = async (req, res, next) => {
   const token = req.headers["authorization"];
   const refreshToken = req.headers["refreshtoken"];
   const decodedWithValue = isAccessTokenExpired(token);
-  req.validateToken = decodedWithValue.decoded;
+  req.validateToken = decodedWithValue;
+
   // Check if access token is expired
   if (decodedWithValue.expired) {
     try {
       // Use the refresh token to get a new access token
-      await refreshAccessToken(refreshToken);
+      const newAccessToken = await refreshAccessToken(refreshToken);
+    //  console.log(newAccessToken);
       // Update the access token in your Postman environment or application's state
       // Make your request with the new access token
     } catch (error) {

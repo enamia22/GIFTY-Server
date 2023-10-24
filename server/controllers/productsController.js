@@ -1,22 +1,26 @@
 const Product = require("../models/Product");
-const Category = require("../models/Category");
+const SubCategory = require("../models/SubCategory");
 const { adminOrManager } = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
 var uniqid = require("uniqid");
+const { validationResult } = require('express-validator');
+const { sanitizeRequestBody } = require('../middleware/dataValidation');
 
 //Add Subcategory
 const addProduct = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
+
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
+
     let imageProduct;
 
     if (req.file) {
       imageProduct = req.file.path;
     }
+
     let {
       productName,
       shortDescription,
@@ -25,57 +29,67 @@ const addProduct = async (req, res) => {
       price,
       discountPrice,
       options,
+      pack
     } = req.body;
 
-    if (
-      !productName ||
-      !shortDescription ||
-      !longDescription ||
-      !subcategoryId ||
-      !price ||
-      !discountPrice ||
-      !options
-    ) {
-      res.status(200).send({ message: "missing field" });
+    // Validation: Check if required fields are missing
+    if (!productName || !shortDescription || !longDescription || !subcategoryId || !price || !discountPrice || !options) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    const createProduct = sanitizeRequestBody(req);    
+    // If there are validation errors, return a response with the errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    
+    const existingProduct = await Product.findOne({ productName });
+
+    if (existingProduct) {
+      return res.status(400).json({ error: "Product already exists" });
     }
 
-    const existingProduct = await Product.findOne({ productName });
-    if (existingProduct) {
-      return res.status(400).json({ error: "Product already exits" });
-    }
     const currentDate = new Date();
 
     const newProduct = new Product({
       sku: uniqid(),
-      productName,
+      productName: createProduct.productName,
       productImage: imageProduct,
-      shortDescription,
-      longDescription,
-      subcategoryId,
-      price,
-      discountPrice,
-      options,
-      creationDate: currentDate, // Set the creationDate field to the current timestamp
+      shortDescription: createProduct.shortDescription,
+      longDescription: createProduct.shortDescription,
+      subcategoryId: createProduct.subcategoryId,
+      price: createProduct.price,
+      discountPrice: createProduct.discountPrice,
+      options: createProduct.options,
+      pack: createProduct.pack,
+      creationDate: currentDate,
     });
 
     const createdProduct = await newProduct.save();
-    if (!createdProduct) return res.json({ message: "Product not created" });
-    res.status(201).json({ message: "Product created with success" });
+
+    if (!createdProduct) {
+      return res.status(500).json({ message: "Product not created" });
+    }
+
+    return res.status(201).json({ message: "Product created with success" });
   } catch (error) {
     console.log("Error while adding new Product: " + error);
-    res.status(500).send(error.message);
+    return res.status(500).json({ error: error.message });
   }
 };
+
 
 //get all Products
 const getAllProducts = async (req, res) => {
   try {
-    // let authorized = await adminOrManager(req.validateToken);
-    // console.log(authorized);
-    // if (!authorized) {
-    //   res.status(403).json({ message: "Not authorized" });
-    // }
+    let authorized = false;
 
+    if(req.validateToken){
+      const checkIfAuthorized = await adminOrManager(req.validateToken);
+      if(checkIfAuthorized){
+        authorized = true;
+      }
+    }
     const { page = 1, sort = "ASC" } = req.query;
     const limit = 10;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
@@ -90,18 +104,44 @@ const getAllProducts = async (req, res) => {
         sort: sortOption,
         select: fieldsToRetrieve,
       };
-      const result = await Product.paginate({}, options);
+      
+      let query = {};
+      
+      if (!authorized) {
+        // For not authorized users, filter by status true
+        query.active = true;
+      }
+      
+      const result = await Product.paginate(query, options);
 
       async function getSubCatName(item) {
-        const subcategory = await Category.findById(item);
-        const subcategoryName = subcategory.subcategoryName;
-        return subcategoryName;
+        try {
+          const check = mongoose.Types.ObjectId.isValid(item);
+          if(check){
+            const subcategory = await SubCategory.findById(item);
+            if (subcategory) {
+              const subcategoryName = subcategory.subcategoryName;
+              return subcategoryName;
+            } else {
+              return null; // Handle the case where the document is not found
+            }
+          }else{
+            return null
+          }
+
+        } catch (error) {
+          console.error("Error while retrieving subcategory:", error);
+          return null; // Handle the error
+        }
       }
+      
       async function updateArray(array) {
         const promises = array.map(async (item) => ({
           ...item._doc,
-          subcategoryName: await getSubCatName(item._doc.subcategoryId),
+          subcategoryName: await getSubCatName(item.subcategoryId),
+          hello: 'hello'
         }));
+
 
         return Promise.all(promises);
       }
@@ -124,19 +164,29 @@ const getAllProducts = async (req, res) => {
 
 const findProductById = async (req, res) => {
   try {
-    // let authorized = await adminOrManager(req.validateToken);
-    // console.log(authorized);
-    // if (!authorized) {
-    //   res.status(403).json({ message: "Not authorized" });
-    // }
+    let authorized = false;
 
+    if(req.validateToken){
+      const checkIfAuthorized = await adminOrManager(req.validateToken);
+      if(checkIfAuthorized){
+        authorized = true;
+      }
+    }
     const productId = req.params.id;
     const check = mongoose.Types.ObjectId.isValid(productId);
     if (check) {
-      const product = await Product.findById(productId);
+      let query = { _id: productId };
+
+      if (!authorized) {
+        // For not authorized users, filter by status true
+        query.active = true;
+      }
+      
+      const product = await Product.findOne(query);
+
       if (product) {
         async function getSubCatName(item) {
-          const subcategory = await Category.findById(item);
+          const subcategory = await SubCategory.findById(item);
           const subcategoryName = subcategory.subcategoryName;
           return subcategoryName;
         }
@@ -164,11 +214,14 @@ const findProductById = async (req, res) => {
 
 const findProductByQuery = async (req, res) => {
   try {
-    // let authorized = await adminOrManager(req.validateToken);
-    // console.log(authorized);
-    // if (!authorized) {
-    //   res.status(403).json({ message: "Not authorized" });
-    // }
+    let authorized = false;
+
+    if(req.validateToken){
+      const checkIfAuthorized = await adminOrManager(req.validateToken);
+      if(checkIfAuthorized){
+        authorized = true;
+      }
+    }
 
     const query = req.query.query;
     const { page = 1, sort = "ASC" } = req.query;
@@ -185,9 +238,14 @@ const findProductByQuery = async (req, res) => {
       sort: sortOption,
       select: fieldsToRetrieve,
     };
-
+      
     // Define the query to filter products based on the productName using regex
-    const queryRegex = { productName: { $regex: query, $options: "i" } };
+    const queryRegex = { productName: { $regex: query, $options: "i" }, };
+
+    if (!authorized) {
+      // For not authorized users, filter by status true
+      queryRegex.active = true;
+    }
 
     // Use Product.paginate to retrieve paginated data with projection
     const result = await Product.paginate(queryRegex, options);
@@ -195,7 +253,7 @@ const findProductByQuery = async (req, res) => {
     // const results = await Product.find({ productName: { $regex: query, $options: 'i' } });
 
     async function getSubCatName(item) {
-      const subcategory = await Category.findById(item);
+      const subcategory = await SubCategory.findById(item);
       const subcategoryName = subcategory.subcategoryName;
       return subcategoryName;
     }
@@ -234,7 +292,14 @@ const updateProduct = async (req, res) => {
       imageProduct = req.file.path;
     }
     const productId = req.params.id;
-    const productUpdated = req.body;
+
+    const productUpdated = sanitizeRequestBody(req);    
+    // If there are validation errors, return a response with the errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    
     productUpdated.productImage = imageProduct;
 
     productUpdated.lastUpdate = new Date();

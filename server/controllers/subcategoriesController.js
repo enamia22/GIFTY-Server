@@ -1,4 +1,4 @@
-const Category = require("../models/SubCategory");
+const SubCategory = require("../models/SubCategory");
 const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
 
@@ -16,13 +16,13 @@ const addSubcategory = async (req, res) => {
       res.status(200).send({ message: "missing field" });
     }
 
-    const existingCategory = await Category.findOne({ subcategoryName });
+    const existingCategory = await SubCategory.findOne({ subcategoryName });
     if (existingCategory) {
       return res.status(400).json({ error: "subcategory already exits" });
     }
     const currentDate = new Date();
 
-    const newCategory = new Category({
+    const newCategory = new SubCategory({
       subcategoryName,
       categoryId,
       active,
@@ -42,11 +42,14 @@ const addSubcategory = async (req, res) => {
 //get subcategories
 const getAllSubcategories = async (req, res) => {
   try {
-    // let authorized = await adminOrManager(req.validateToken);
-    // console.log(authorized);
-    // if (!authorized) {
-    //   res.status(403).json({ message: "Not authorized" });
-    // }
+    let authorized = false;
+
+    if(req.validateToken){
+      const checkIfAuthorized = await adminOrManager(req.validateToken);
+      if(checkIfAuthorized){
+        authorized = true;
+      }
+    }
 
     const { page = 1, sort = "ASC" } = req.query;
     const limit = 10;
@@ -58,8 +61,15 @@ const getAllSubcategories = async (req, res) => {
         limit: limit,
         sort: sortOption,
       };
+      
+      let query = {};
+      
+      if (!authorized) {
+        // For not authorized users, filter by status true
+        query.active = true;
+      }
 
-      const result = await Category.paginate({}, options);
+      const result = await SubCategory.paginate(query, options);
       return res.json(result);
     } catch (error) {
       return res.status(500).json({ error: "Error retrieving data" });
@@ -72,16 +82,26 @@ const getAllSubcategories = async (req, res) => {
 
 const findSubcategoryById = async (req, res) => {
   try {
-    // let authorized = await adminOrManager(req.validateToken);
-    // console.log(authorized);
-    // if (!authorized) {
-    //   res.status(403).json({ message: "Not authorized" });
-    // }
+    let authorized = false;
+
+    if(req.validateToken){
+      const checkIfAuthorized = await adminOrManager(req.validateToken);
+      if(checkIfAuthorized){
+        authorized = true;
+      }
+    }
 
     const subcategoryId = req.params.id;
     const check = mongoose.Types.ObjectId.isValid(subcategoryId);
     if (check) {
-      const subcategory = await Category.findById(subcategoryId);
+      let query = { _id: subcategoryId };
+
+      if (!authorized) {
+        // For not authorized users, filter by status true
+        query.active = true;
+      }
+      const subcategory = await SubCategory.findOne(query);
+
       if (subcategory) {
         res.json(subcategory);
       } else {
@@ -98,17 +118,35 @@ const findSubcategoryById = async (req, res) => {
 
 const findSubcategoryByQuery = async (req, res) => {
   try {
-    // let authorized = await adminOrManager(req.validateToken);
-    // console.log(authorized);
-    // if (!authorized) {
-    //   res.status(403).json({ message: "Not authorized" });
-    // }
+    let authorized = false;
+
+    if(req.validateToken){
+      const checkIfAuthorized = await adminOrManager(req.validateToken);
+      if(checkIfAuthorized){
+        authorized = true;
+      }
+    }
 
     const query = req.query.query;
+    const { page = 1, sort = "ASC" } = req.query;
+    const limit = 10;
+    const sortOption = sort === "DESC" ? "-_id" : "_id";
 
-    const results = await Category.find({
-      subcategoryName: { $regex: query, $options: "i" },
-    });
+    const options = {
+      page: page,
+      limit: limit,
+      sort: sortOption,
+    };
+      
+    // Define the query to filter subcategories based on the subcategoryName using regex
+    const queryRegex = { subcategoryName: { $regex: query, $options: "i" }, };
+
+    if (!authorized) {
+      // For not authorized users, filter by status true
+      queryRegex.active = true;
+    }
+
+    const results = await SubCategory.paginate(queryRegex, options);
 
     res.json(results);
   } catch (error) {
@@ -119,7 +157,7 @@ const findSubcategoryByQuery = async (req, res) => {
 
 const updateSubcategory = async (req, res) => {
   try {
-    let authorized = await adminOnly(req.validateToken);
+    let authorized = await adminOrManager(req.validateToken);
     console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
@@ -132,9 +170,9 @@ const updateSubcategory = async (req, res) => {
 
     const check = mongoose.Types.ObjectId.isValid(subcategoryId);
     if (check) {
-      const user = await Category.findById(subcategoryId).select("-password");
-      if (user) {
-        const existingCategory = await Category.findOne({
+      const subCategory = await SubCategory.findById(subcategoryId)
+      if (subCategory) {
+        const existingCategory = await SubCategory.findOne({
           $and: [
             { $or: [{ subcategoryName: subcategoryUpdated.subcategoryName }] },
             { _id: { $ne: subcategoryId } }, // search in all users except the current one
@@ -143,7 +181,7 @@ const updateSubcategory = async (req, res) => {
 
         if (existingCategory)
           return res.status(400).json({ error: "subcategory already exits" });
-        const subcategory = await Category.findByIdAndUpdate(
+        const subcategory = await SubCategory.findByIdAndUpdate(
           subcategoryId,
           subcategoryUpdated,
           {
@@ -165,7 +203,7 @@ const updateSubcategory = async (req, res) => {
 
 const deleteSubcategory = async (req, res) => {
   try {
-    let authorized = await adminOnly(req.validateToken);
+    let authorized = await adminOrManager(req.validateToken);
     console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
@@ -175,7 +213,7 @@ const deleteSubcategory = async (req, res) => {
 
     const check = mongoose.Types.ObjectId.isValid(subcategoryId);
     if (check) {
-      const subcategory = await Category.findByIdAndDelete(subcategoryId);
+      const subcategory = await SubCategory.findByIdAndDelete(subcategoryId);
       if (subcategory) {
         res.send("subcategory deleted successfully");
       } else {

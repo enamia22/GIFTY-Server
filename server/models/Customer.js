@@ -50,6 +50,7 @@ const customerSchema = new mongoose.Schema({
 
 customerSchema.plugin(mongoosePaginate);
 
+  
   const Customer = mongoose.model("customers", customerSchema);
   
   module.exports = Customer;

@@ -42,6 +42,10 @@ const productSchema = new mongoose.Schema({
     required: true
   },
   options: [String],
+  pack: {
+    type: Boolean,
+    default: false
+  },
   lastUpdate: {
     type: Date // Set the default value to the current timestamp
   },
