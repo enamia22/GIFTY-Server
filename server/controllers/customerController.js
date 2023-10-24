@@ -13,9 +13,6 @@ const {
   generateAccessToken,
 } = require("../controllers/refreshTokenController");
 
-
-
-
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 465,
