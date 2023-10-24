@@ -8,7 +8,8 @@ const router = express.Router();
 
 // Express Route for submitting a review for a specific product
 router.post("/", isTokenExpired, reviewController.submitProductReview);
-router.get("/:productId", isTokenExpired, reviewController.getAllReviews)
+router.get("/:productId", isTokenExpired, reviewController.getAllReviews);
+router.delete("/:id",isTokenExpired, reviewController.deleteReview);
 
 
 

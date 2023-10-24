@@ -2,17 +2,7 @@ const Customer = require("../models/Customer");
 const Product = require("../models/Product"); // Import your product model
 const Review = require("../models/Review");
 const mongoose = require("mongoose");
-// const User = require("../models/User");
 
-// const nodemailer = require("nodemailer");
-// const bcrypt = require("bcrypt");
-// const verifyToken = require("../middleware/authMiddleware");
-// const crypto = require('crypto');
-// const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
-// const {
-//   createRefreshToken,
-//   generateAccessToken,
-// } = require("../controllers/refreshTokenController");
 
 const submitProductReview = async (req, res) => {
   try {
@@ -70,29 +60,30 @@ const getAllReviews = async (req, res) => {
   }
 };
 
+//delete review
+const deleteReview = async (req, res) => {
+  try {
+    const reviewId = req.params.id;
 
- 
-// const getAllReviews = async (req, res) => {
-//   const { page = 1, sort = 'ASC' } = req.query;
-//   const limit = 10;
-//   const sortOption = sort === 'DESC' ? '-_id' : '_id';
-
-//   try {
-//     const options = {
-//     page: page,
-//     limit: limit,
-//     sort: sortOption,
-//     };
-
-//     const result = await Review.paginate({}, options);
-//     return res.json(result);
-//   } catch (error) {
-//     return res.status(500).json({ error: 'Error retrieving data' });
-//   }
-// };
+    const check = mongoose.Types.ObjectId.isValid(reviewId);
+    if (check) {
+      const existed = await Review.findByIdAndDelete(reviewId);
+      if (existed) {
+        res.send("review deleted successfully");
+      } else {
+        res.send("not found");
+      }
+    } else {
+      res.send("not an objectID");
+    }
+  } catch {
+    console.log(err.message);
+  }
+}; 
 
 
 module.exports = {
     submitProductReview,
-    getAllReviews
+    getAllReviews,
+    deleteReview
 };
