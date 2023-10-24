@@ -1,7 +1,8 @@
 const Order = require("../models/Order");
-const User = require("../models/User");
+const Customer = require("../models/Customer");
 const Product = require("../models/Product");
 const mongoose = require("mongoose");
+const { adminOrManager } = require("../middleware/authMiddleware");
 
 const addOrder = async (req, res) => {
   try {
@@ -63,8 +64,8 @@ const getAllOrders = async (req, res) => {
       const result = await Order.paginate({}, options);
 
       async function getCustomerFullName(item) {
-        const user = await User.findById(item);
-        const fullName = user.firstName + " " + user.lastName;
+        const customer = await Customer.findById(item);
+        const fullName = customer.firstName + " " + customer.lastName;
         return fullName;
       }
 
@@ -102,64 +103,68 @@ const getAllOrders = async (req, res) => {
 const getOrderById = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
-    if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
-    }
     const orderId = req.params.id;
+    const customerOrder = await Order.findById(orderId);
+    const customerOrderId = customerOrder.customer_id;
+    const customerId = new mongoose.Types.ObjectId(req.validateToken.userId);
 
-    async function getCustomerInfo(customerId) {
-      const user = await User.findById(customerId);
-      if (user) {
-        return {
-          customerId: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-          phone: user.phone,
-          address: user.address,
-        };
+    if (authorized || customerId.equals(customerOrderId)) {
+
+      async function getCustomerInfo(customerId) {
+        const customer = await Customer.findById(customerId);
+        if (customer) {
+          return {
+            customerId: customer._id,
+            firstName: customer.firstName,
+            lastName: customer.lastName,
+            email: customer.email,
+            phone: customer.phone,
+            address: customer.address,
+          };
+        }
+        return "Customer not found";
       }
-      return "Customer not found";
-    }
 
-    async function getProductDetails(id) {
-      const product = await Product.findById(id);
-      const details = {
-        productId: product._id,
-        productName: product.productName,
-        productImage: product.productImage,
-        productPrice: product.price,
-      };
-      return details;
-    }
-
-    async function getProductInfo(array) {
-      const promises = array.map(async (id) => await getProductDetails(id));
-      return Promise.all(promises);
-    }
-
-    const check = mongoose.Types.ObjectId.isValid(orderId);
-    if (check) {
-      const order = await Order.findById(orderId);
-      if (order) {
-        const customerInfo = await getCustomerInfo(order.customer_id);
-        const productInfo = await getProductInfo(order.order_items);
-
-        const { customer_id, order_items, ...orderData } = order.toObject();
-
-        const orderWithCustomerInfo = {
-          ...orderData,
-          customerInfo: customerInfo,
-          productDetails: productInfo,
+      async function getProductDetails(id) {
+        const product = await Product.findById(id);
+        const details = {
+          productId: product._id,
+          productName: product.productName,
+          productImage: product.productImage,
+          productPrice: product.price,
         };
+        return details;
+      }
 
-        res.json(orderWithCustomerInfo);
+      async function getProductInfo(array) {
+        const promises = array.map(async (id) => await getProductDetails(id));
+        return Promise.all(promises);
+      }
+
+      const check = mongoose.Types.ObjectId.isValid(orderId);
+      if (check) {
+        const order = await Order.findById(orderId);
+        if (order) {
+          const customerInfo = await getCustomerInfo(order.customer_id);
+          const productInfo = await getProductInfo(order.order_items);
+
+          const { customer_id, order_items, ...orderData } = order.toObject();
+
+          const orderWithCustomerInfo = {
+            ...orderData,
+            customerInfo: customerInfo,
+            productDetails: productInfo,
+          };
+
+          res.json(orderWithCustomerInfo);
+        } else {
+          res.send("Order not found");
+        }
       } else {
-        res.send("Order not found");
+        res.send("not a valid objectID");
       }
     } else {
-      res.send("not a valid objectID");
+      res.status(403).json({ message: "Not authorized" });
     }
   } catch (error) {
     console.log("Error retrieving data: " + error);

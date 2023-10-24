@@ -7,7 +7,6 @@ const customerSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-
   lastName: {
     type: String,
     required: true,
@@ -21,7 +20,6 @@ const customerSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-
   active: {
     type: Boolean,
     default: true
@@ -36,6 +34,12 @@ const customerSchema = new mongoose.Schema({
   confirmationToken : {
     type: String,
   },
+  address: {
+    type: String,
+  },
+  phone: {
+    type: Number,
+  },
   role : {
     type: String,
     default:'customer'
@@ -44,19 +48,6 @@ const customerSchema = new mongoose.Schema({
 
 customerSchema.plugin(mongoosePaginate);
 
-customerSchema.methods.generateAuthToken = async function () {
-    try {
-      let token = jwt.sign({ id: this._id, email: this.email}, "abracadabra", {
-        expiresIn: "40h",
-      });
-  
-      return token;
-    } catch (error) {
-      console.log("error while generating token");
-    }
-  };
-
-  
   const Customer = mongoose.model("customers", customerSchema);
   
   module.exports = Customer;
