@@ -278,7 +278,7 @@ const updateCustomer = async (req, res) => {
     if (!authorized && customerTokenId !== customerId) {
       res.status(403).json({ message: "Not authorized" });
     }
-  
+
     const customerUpdated = req.body;
     const check = mongoose.Types.ObjectId.isValid(customerId);
 
@@ -316,7 +316,6 @@ const updateCustomer = async (req, res) => {
   }
 };
 
-
 //delete costumers
 const deleteCustomer = async (req, res) => {
   try {
@@ -344,7 +343,6 @@ const deleteCustomer = async (req, res) => {
   }
 };
 
-
 const validateProfile = async (req, res) => {
   // Confirming the email
   const id = req.params.id;
@@ -353,7 +351,6 @@ const validateProfile = async (req, res) => {
   if (customer) {
     if (customer.confirmationToken === token) {
       const customerUpdated = { confirmed: true };
-
       const updatedCustomer = await Customer.findByIdAndUpdate(
         id,
         customerUpdated,

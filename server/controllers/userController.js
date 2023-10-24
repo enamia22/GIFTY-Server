@@ -103,7 +103,7 @@ const loginUser = async (req, res) => {
 //get users
 const getAllUsers = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
+    let authorized = await adminOnly(req.validateToken);
     console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
@@ -133,7 +133,7 @@ const getAllUsers = async (req, res) => {
 
 const findUserById = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
+    let authorized = await adminOnly(req.validateToken);
     console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
@@ -158,7 +158,7 @@ const findUserById = async (req, res) => {
 
 const findUserByQuery = async (req, res) => {
   try {
-    let authorized = adminOrManager(req.validateToken);
+    let authorized = adminOnly(req.validateToken);
     console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
