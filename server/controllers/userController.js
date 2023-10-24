@@ -44,16 +44,11 @@ const addUser = async (req, res) => {
 
     // const token = await newUser.generateAuthToken();
     const createdUser = await newUser.save();
-    const token = generateAccessToken(createdUser._id, createdUser.email, createdUser.role);
-    const refreshToken = await createRefreshToken(
-      createdUser._id,
-      createdUser.email,
-      createdUser.role,
-      "MustaphaIpAddress"
-    );
-    res
-      .status(200)
-      .json({ token: token, refreshToken: refreshToken.value, status: 200 });
+    if (createdUser) {
+      res.status(200).json({ message: "User created successfully" });
+    } else {
+      res.status(403).json({ message: "Failed to create User" });
+    }
   } catch (error) {
     console.log("Error in registration: " + error);
     res.status(500).send(error.message);
@@ -90,6 +85,8 @@ const loginUser = async (req, res) => {
         user.role,
         "MustaphaIpAddress"
       );
+      res.cookie("token", token);
+      res.cookie("refreshToken", refreshToken.value);
       res
         .status(200)
         .json({ token: token, refreshToken: refreshToken.value, status: 200 });

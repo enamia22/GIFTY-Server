@@ -1,10 +1,6 @@
 const Customer = require("../models/Customer");
-const Product = require("../models/Product"); // Import your product model
-
 const nodemailer = require("nodemailer");
-const User = require("../models/User");
 const bcrypt = require("bcrypt");
-const verifyToken = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
 const crypto = require("crypto");
 const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
@@ -141,7 +137,8 @@ const addCustomer = async (req, res) => {
     // (in a real application, you'd send an actual email)
     const confirmationLink = `http://localhost:3001/v1/customers/validate/${createdCustomer._id}/${confirmationToken}`;
     main(email, username, confirmationLink).catch(console.error);
-
+    res.cookie("token", token);
+    res.cookie("refreshToken", refreshToken.value);
     res.status(201).json({
       message: "Customer created successfully",
       token: token,
@@ -175,6 +172,8 @@ const loginCustomer = async (req, res) => {
         user.role,
         "MustaphaIpAddress"
       );
+      res.cookie("token", token);
+      res.cookie("refreshToken", refreshToken.value);
       res
         .status(200)
         .json({ token: token, refreshToken: refreshToken.value, status: 200 });
@@ -349,7 +348,10 @@ const validateProfile = async (req, res) => {
   const token = req.params.token;
   const customer = await Customer.findById(id);
   if (customer) {
-    if (customer.confirmationToken === token) {
+    if (customer.confirmed) {
+      // Email is already confirmed
+      res.json({ message: "Email is already confirmed. You can log in." });
+    } else if (customer.confirmationToken === token) {
       const customerUpdated = { confirmed: true };
       const updatedCustomer = await Customer.findByIdAndUpdate(
         id,
