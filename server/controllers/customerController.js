@@ -6,24 +6,21 @@ const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const verifyToken = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
-const crypto = require('crypto');
+const crypto = require("crypto");
 const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
 const {
   createRefreshToken,
   generateAccessToken,
 } = require("../controllers/refreshTokenController");
 
-
-
-
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
+  host: "smtp.gmail.com",
   port: 465,
   secure: true,
   auth: {
-    user: 'mustaphaettanti@gmail.com', // Your Gmail email address
-    pass: 'cupq xvyy tglk guqd' // Your Gmail password or App Password if 2FA is enabled
-  }
+    user: "mustaphaettanti@gmail.com", // Your Gmail email address
+    pass: "cupq xvyy tglk guqd", // Your Gmail password or App Password if 2FA is enabled
+  },
 });
 
 // async..await is not allowed in global scope, must use a wrapper
@@ -101,64 +98,75 @@ async function main(to, username, confirmationLink) {
   });
 
   console.log("Message sent: %s", info.messageId);
-
 }
 
 //Add Customer
 const addCustomer = async (req, res) => {
-    try {
-      let { firstName, lastName, email, password, active } = req.body;
-      if (!firstName || !lastName || !email || !password  ) {
-        res.status(200).send({ message: "missing field" });
-      }
- 
-      const existingCustomer = await Customer.findOne({ email });
-      if (existingCustomer)
-        return res.status(400).json({ error: "Customer already exits" });
-        const confirmationToken = crypto.randomBytes(20).toString('hex');
+  try {
+    let { firstName, lastName, email, password, active } = req.body;
+    if (!firstName || !lastName || !email || !password) {
+      res.status(200).send({ message: "missing field" });
+    }
 
-      const salt = await bcrypt.genSalt(10);
-      password = await bcrypt.hash(password, salt);
-      const newCustomer = new Customer({ firstName, lastName, email, password, active });
+    const existingCustomer = await Customer.findOne({ email });
+    if (existingCustomer)
+      return res.status(400).json({ error: "Customer already exits" });
+    const confirmationToken = crypto.randomBytes(20).toString("hex");
 
-      newCustomer.confirmationToken=confirmationToken;
-     const createdCustomer =  await newCustomer.save();
-     const token = await generateAccessToken(createdCustomer._id, createdCustomer.email, createdCustomer.role);
-     const refreshToken = await createRefreshToken(
+    const salt = await bcrypt.genSalt(10);
+    password = await bcrypt.hash(password, salt);
+    const newCustomer = new Customer({
+      firstName,
+      lastName,
+      email,
+      password,
+      active,
+    });
+
+    newCustomer.confirmationToken = confirmationToken;
+    const createdCustomer = await newCustomer.save();
+    const token = await generateAccessToken(
+      createdCustomer._id,
+      createdCustomer.email,
+      createdCustomer.role
+    );
+    const refreshToken = await createRefreshToken(
       createdCustomer._id,
       createdCustomer.email,
       createdCustomer.role,
-       "MustaphaIpAddress"
-     );
-      const username =  firstName +" "+ lastName;
-      // User registration
-  // (in a real application, you'd send an actual email)
-  const confirmationLink = `http://localhost:3001/v1/customers/validate/${createdCustomer._id}/${confirmationToken}`;
-        main(email, username, confirmationLink).catch(console.error);
+      "MustaphaIpAddress"
+    );
+    const username = firstName + " " + lastName;
+    // User registration
+    // (in a real application, you'd send an actual email)
+    const confirmationLink = `http://localhost:3001/v1/customers/validate/${createdCustomer._id}/${confirmationToken}`;
+    main(email, username, confirmationLink).catch(console.error);
 
-      res.status(201).json({ message: "Customer created successfully", token: token, status: 201, refreshToken : refreshToken.value });
+    res.status(201).json({
+      message: "Customer created successfully",
+      token: token,
+      status: 201,
+      refreshToken: refreshToken.value,
+    });
+  } catch (error) {
+    console.log("Error in registration: " + error);
+    res.status(500).send(error);
+  }
+};
 
-
-    } catch (error) {
-      console.log("Error in registration: " + error);
-      res.status(500).send(error);
-    }
-  };
-
-  //Login
+//Login
 const loginCustomer = async (req, res) => {
-  
   const { email, password } = req.body;
   try {
     const user = await Customer.findOne({ email });
     if (!user) res.status(404).json({ message: "Customer doesn't exist" });
     const status = user.active;
-    if(!status) res.status(404).json({ message: "Customer not active" });
-   
+    if (!status) res.status(404).json({ message: "Customer not active" });
+
     const validPassword = await bcrypt.compare(password, user.password);
 
     if (!validPassword) {
-      res.status(401).json({ message: "Invalid Credentials" , status: 401 });
+      res.status(401).json({ message: "Invalid Credentials", status: 401 });
     } else {
       const token = await generateAccessToken(user._id, user.email, user.role);
       const refreshToken = await createRefreshToken(
@@ -169,13 +177,14 @@ const loginCustomer = async (req, res) => {
       );
       res
         .status(200)
-        .json({ token: token, refreshToken: refreshToken.value, status: 200 });    }
+        .json({ token: token, refreshToken: refreshToken.value, status: 200 });
+    }
   } catch (error) {
     res.status(500).json({ error: error });
   }
 };
 
-//get Customers 
+//get Customers
 const getAllCustomers = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
@@ -183,27 +192,27 @@ const getAllCustomers = async (req, res) => {
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
     }
-    const { page = 1, sort = 'ASC' } = req.query;
+    const { page = 1, sort = "ASC" } = req.query;
     const limit = 10;
-    const sortOption = sort === 'DESC' ? '-_id' : '_id';
+    const sortOption = sort === "DESC" ? "-_id" : "_id";
 
     try {
       const options = {
-      page: page,
-      limit: limit,
-      sort: sortOption,
+        page: page,
+        limit: limit,
+        sort: sortOption,
+        select: "-password",
       };
 
       const result = await Customer.paginate({}, options);
       return res.json(result);
     } catch (error) {
-      return res.status(500).json({ error: 'Error retrieving data' });
+      return res.status(500).json({ error: "Error retrieving data" });
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-}
-
+};
 
 //search for a Customer By query
 const findCustomerByQuery = async (req, res) => {
@@ -214,14 +223,18 @@ const findCustomerByQuery = async (req, res) => {
       res.status(403).json({ message: "Not authorized" });
     }
 
-    const query = req.query.query; 
+    const query = req.query.query;
 
-    const results = await Customer.find({ firstName: { $regex: query, $options: 'i' } });
-
+    const results = await Customer.find(
+      {
+        firstName: { $regex: query, $options: "i" },
+      },
+      "-password"
+    );
     res.json(results);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'An error occurred' });
+    res.status(500).json({ error: "An error occurred" });
   }
 };
 //search for a Customer By Id
@@ -229,25 +242,28 @@ const findCustomerByQuery = async (req, res) => {
 const findCustomerById = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
-    if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
-    }
     const customerId = req.params.id;
-    const check = mongoose.Types.ObjectId.isValid(customerId);
-    if (check) {
-      const customer = await Customer.findById(customerId).select("-password");
-      if (customer) {
-        res.json(customer);
+    const customerTokenId = req.validateToken.userId;
+
+    if (authorized || customerId === customerTokenId) {
+      const check = mongoose.Types.ObjectId.isValid(customerId);
+      if (check) {
+        const customer = await Customer.findById(customerId).select(
+          "-password"
+        );
+        if (customer) {
+          res.json(customer);
+        } else {
+          res.send("Customer not found");
+        }
       } else {
-        res.send("Customer not found");
+        res.send("not an objectID");
       }
     } else {
-      res.send("not an objectID");
+      res.status(403).json({ message: "Not authorized" });
     }
   } catch (err) {
     console.log(err.message);
-
   }
 };
 
@@ -256,29 +272,37 @@ const findCustomerById = async (req, res) => {
 const updateCustomer = async (req, res) => {
   try {
     let authorized = await adminOnly(req.validateToken);
-    console.log(authorized);
-    if (!authorized) {
+    const customerId = req.params.id;
+    const customerTokenId = req.validateToken.userId;
+
+    if (!authorized && customerTokenId !== customerId) {
       res.status(403).json({ message: "Not authorized" });
     }
-    
-    const customerId = req.params.id;
+  
     const customerUpdated = req.body;
-
-
     const check = mongoose.Types.ObjectId.isValid(customerId);
+
     if (check) {
-      const existed = await Customer.findById(customerId).select("-password");
+      let query = { _id: customerId };
+      const options = {};
+      if (authorized) {
+        options.select = "-password";
+      }
+
+      const existed = await Customer.findOne(query, options);
       if (existed) {
         const existingCustomer = await Customer.findOne({
-          $or: [
-            { email: customerUpdated.email },
-          ]
+          $or: [{ email: customerUpdated.email }],
         });
         if (existingCustomer)
-        return res.status(400).json({ error: "Customer already exits" });
-        const customer = await Customer.findByIdAndUpdate(customerId, customerUpdated, {
-          new: true,
-        });
+          return res.status(400).json({ error: "Customer already exits" });
+        const customer = await Customer.findByIdAndUpdate(
+          customerId,
+          customerUpdated,
+          {
+            new: true,
+          }
+        );
         res.json(customer);
       } else {
         res.send("not found");
@@ -289,9 +313,9 @@ const updateCustomer = async (req, res) => {
   } catch (err) {
     console.log(err.message);
     res.status(500).json({ error: "Internal Server Error" }); // Send an error response to the client
-
   }
 };
+
 
 //delete costumers
 const deleteCustomer = async (req, res) => {
@@ -318,105 +342,42 @@ const deleteCustomer = async (req, res) => {
   } catch {
     console.log(err.message);
   }
-}; 
-
-//get customer profile
-const getCustomerProfile = async (req, res) => {
-    try {      
-      const customerId = req.params.id;
-      if (decodedCustomer.id !== customerId) {
-        return res.status(401).json({ message: "Unauthorized it's not ur profile" });
-      }
-      const check = mongoose.Types.ObjectId.isValid(customerId);
-      if (check) {
-        const customer = await Customer.findById(customerId).select("-password");
-
-        if (customer) {
-          res.json(customer);
-        } else {
-          res.send("Customer not found");
-        }
-      } else {
-        res.send("not an objectID");
-      }
-    } catch (err) {
-      console.log(err.message);
-  
-    
-  };
-}
-
-//update a Customer's Profile
-
-const updateCustomerProfile = async (req, res) => {
-  try {    
-    const customerId = req.params.id;
-    const customerUpdated = req.body;
+};
 
 
-    const check = mongoose.Types.ObjectId.isValid(customerId);
-    if (check) {
-      const existed = await Customer.findById(customerId).select("-password");
-      if (existed) {
-        const existingCustomer = await Customer.findOne({
-          $or: [
-            { email: customerUpdated.email },
-          ]
-        });
-        if (existingCustomer)
-        return res.status(400).json({ error: "Customer already exits" });
-        const customer = await Customer.findByIdAndUpdate(customerId, customerUpdated, {
+const validateProfile = async (req, res) => {
+  // Confirming the email
+  const id = req.params.id;
+  const token = req.params.token;
+  const customer = await Customer.findById(id);
+  if (customer) {
+    if (customer.confirmationToken === token) {
+      const customerUpdated = { confirmed: true };
+
+      const updatedCustomer = await Customer.findByIdAndUpdate(
+        id,
+        customerUpdated,
+        {
           new: true,
-        });
-        res.json(customer);
-      } else {
-        res.send("not found");
-      }
+        }
+      );
+      if (updatedCustomer)
+        res.json({ message: "Email confirmed. You can now log in." });
     } else {
-      res.send("not an objectID");
+      res.json("Invalid Token");
     }
-  } catch (err) {
-    console.log(err.message);
-    res.status(500).json({ error: "Internal Server Error" }); // Send an error response to the client
-
+  } else {
+    res.status(400).json({ message: "Invalid or expired confirmation link." });
   }
 };
 
-const validateProfile = async (req, res) => {
-
-// Confirming the email
-const id = req.params.id;
-const token = req.params.token;
-const customer = await Customer.findById(id);
-  if (customer) {
-    if(customer.confirmationToken === token){
-      const customerUpdated = {confirmed : true}
-  
-      const updatedCustomer = await Customer.findByIdAndUpdate(id, customerUpdated, {
-        new: true,
-      });
-      if (updatedCustomer)res.json({ message: 'Email confirmed. You can now log in.' });
-    }else{
-      res.json('Invalid Token')
-    }
-  } else {
-    res.status(400).json({ message: 'Invalid or expired confirmation link.' });
-  }
-
-
-}
-
-
-
-  module.exports = {
-    addCustomer,
-    loginCustomer,
-    getAllCustomers,
-    findCustomerByQuery,
-    findCustomerById,
-    updateCustomer,
-    deleteCustomer,
-    getCustomerProfile,
-    updateCustomerProfile,
-    validateProfile,
-  };
+module.exports = {
+  addCustomer,
+  loginCustomer,
+  getAllCustomers,
+  findCustomerByQuery,
+  findCustomerById,
+  updateCustomer,
+  deleteCustomer,
+  validateProfile,
+};
