@@ -169,7 +169,6 @@ const getOrderById = async (req, res) => {
 const updateOrder = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
     }

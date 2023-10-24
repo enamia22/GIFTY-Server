@@ -72,10 +72,8 @@ const addProduct = async (req, res) => {
       return res.status(500).json({ message: "Product not created" });
     }
     const addActivity = await trackActivity(req.validateToken.userId, 'add Product', createdProduct._id, createProduct.productName);
-    if(addActivity){
-      console.log("activity added successfully: " + addActivity);
-    }else{
-      console.log("activity not added successfully: " + addActivity);
+    if(!addActivity){
+      console.log("activity not added: ");
     }
     return res.status(201).json({ message: "Product created with success" });
   } catch (error) {
@@ -323,14 +321,25 @@ const updateProduct = async (req, res) => {
 
         if (existingProduct)
           return res.status(400).json({ error: "product already exits" });
-        const updated = await Product.findByIdAndUpdate(
-          productId,
-          productUpdated,
-          {
-            new: true,
-          }
+
+          const updated = await Product.findByIdAndUpdate(
+            productId,
+            productUpdated,
+            {
+              new: true,
+            }
         );
-        res.status(200).json({ "product updated successfuly": updated });
+        if(updated){
+          const addActivity = await trackActivity(req.validateToken.userId, 'update Product', productId, productUpdated.productName);
+          if(!addActivity){
+            console.log("activity not added: ");
+          }
+
+          res.status(200).json({ "product updated successfuly": updated });
+        }else{
+          console.log("Error while updating the product");
+          res.status(500).json({ error: "Error while updating the product" });
+        }
       } else {
         res.status(404).send("not found");
       }
@@ -357,6 +366,10 @@ const deleteProduct = async (req, res) => {
     if (check) {
       const product = await Product.findByIdAndDelete(productId);
       if (product) {
+        const addActivity = await trackActivity(req.validateToken.userId, 'delete Product', productId, product.productName);
+        if(!addActivity){
+          console.log("activity not added: ");
+        }
         res.status(200).send("product deleted successfully");
       } else {
         res.status(404).send("not found");

@@ -1,6 +1,7 @@
 const Category = require("../models/Category");
 const mongoose = require("mongoose");
 const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
+const { trackActivity } = require("../middleware/activityMiddleware");
 
 const addCategory = async (req, res) => {
   try {
@@ -31,6 +32,10 @@ const addCategory = async (req, res) => {
     if (!createdCategory) {
       return res.json({ message: "Category was not created" });
     } else {
+      const addActivity = await trackActivity(req.validateToken.userId, 'add category', createdCategory._id, categoryName);
+      if(!addActivity){
+        console.log("activity not added: ");
+      }
       res.json({ message: "Category created successfully" });
     }
   } catch (e) {
@@ -166,8 +171,8 @@ const updateCategory = async (req, res) => {
 
     const check = mongoose.Types.ObjectId.isValid(categoryId);
     if (check) {
-      const user = await Category.findById(categoryId).select("-password");
-      if (user) {
+      const category = await Category.findById(categoryId);
+      if (category) {
         const existingCategory = await Category.findOne({
           $and: [
             { $or: [{ categoryName: categoryUpdated.categoryName }] },
@@ -184,7 +189,15 @@ const updateCategory = async (req, res) => {
             new: true,
           }
         );
-        res.json({ "category updated successfully": category });
+        if(category){
+          const addActivity = await trackActivity(req.validateToken.userId, 'update category', category._id, category.categoryName);
+          if(!addActivity){
+            console.log("activity not added: ");
+          }
+          res.json({ "category updated successfully": category });
+        }else{
+          res.status(400).json({ error: "category not updated" });
+        }
       } else {
         res.send("not found");
       }
@@ -211,6 +224,10 @@ const deleteCategory = async (req, res) => {
     if (check) {
       const category = await Category.findByIdAndDelete(categoryId);
       if (category) {
+        const addActivity = await trackActivity(req.validateToken.userId, 'delete category', categoryId, category.categoryName);
+        if(!addActivity){
+          console.log("activity not added: ");
+        }
         res.send("category deleted successfully");
       } else {
         res.send("not found");

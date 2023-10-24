@@ -6,7 +6,7 @@ require('dotenv').config()
 const secretKey = process.env.SECRET;
 
 const generateAccessToken = (userId, email, role) => {
-  const accessToken = jwt.sign({ userId, email, role }, secretKey, {
+  const accessToken = jwt.sign({ userId: userId, email: email, role: role }, secretKey, {
     expiresIn: "15m",
   });
   console.log(accessToken);
@@ -127,7 +127,6 @@ const isTokenExpired = async (req, res, next) => {
   const refreshToken = req.headers["refreshtoken"];
   const decodedWithValue = isAccessTokenExpired(token);
   req.validateToken = decodedWithValue;
-
   // Check if access token is expired
   if (decodedWithValue.expired) {
     try {
