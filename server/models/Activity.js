@@ -1,31 +1,21 @@
 const mongoose = require("mongoose");
 const mongoosePaginate = require("mongoose-paginate-v2");
-const customerModel = require("./Customer.js");
-const productModel = require("./Product.js");
+const userModel = require("./User.js");
 
-const orderSchema = new mongoose.Schema({
-  customer_id: {
+const activitySchema = new mongoose.Schema({
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: customerModel, 
+    ref: userModel, 
+    required: true
   },
-  order_items: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: productModel,
-  }],
-  orderDate: {
-    type: Date,
-  },
-  cart_total_price: {
-    type: Number,
-  },
-  status: {
-    type: String,
-    default: "open"
-  },
+  activities: {
+    type: Array,
+    default: [],
+  }
 });
 
-orderSchema.plugin(mongoosePaginate);
+activitySchema.plugin(mongoosePaginate);
 
-const Order = mongoose.model("order", orderSchema);
+const Activity = mongoose.model("activities", activitySchema);
 
-module.exports = Order;
+module.exports = Activity;

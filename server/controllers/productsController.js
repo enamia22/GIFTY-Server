@@ -1,6 +1,7 @@
 const Product = require("../models/Product");
 const SubCategory = require("../models/SubCategory");
 const { adminOrManager } = require("../middleware/authMiddleware");
+const { trackActivity } = require("../middleware/activityMiddleware");
 const mongoose = require("mongoose");
 var uniqid = require("uniqid");
 const { validationResult } = require('express-validator');
@@ -70,7 +71,12 @@ const addProduct = async (req, res) => {
     if (!createdProduct) {
       return res.status(500).json({ message: "Product not created" });
     }
-
+    const addActivity = await trackActivity(req.validateToken.userId, 'add Product', createdProduct._id, createProduct.productName);
+    if(addActivity){
+      console.log("activity added successfully: " + addActivity);
+    }else{
+      console.log("activity not added successfully: " + addActivity);
+    }
     return res.status(201).json({ message: "Product created with success" });
   } catch (error) {
     console.log("Error while adding new Product: " + error);
