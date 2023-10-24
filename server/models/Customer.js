@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const mongoosePaginate = require('mongoose-paginate-v2');
 
+
+
 const customerSchema = new mongoose.Schema({
   firstName: {
     type: String,
