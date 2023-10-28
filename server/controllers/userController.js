@@ -1,6 +1,6 @@
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
-const { adminOnly } = require("../middleware/authMiddleware");
+const { adminOnly, adminOrManager } = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
 const {
   createRefreshToken,
@@ -96,8 +96,8 @@ const loginUser = async (req, res) => {
         user.role,
         "MustaphaIpAddress"
       );
-      res.cookie("token", token);
-      res.cookie("refreshToken", refreshToken.value);
+      res.cookie("token", token, { httpOnly: true });
+      res.cookie("refreshToken", refreshToken.value, { httpOnly: true });
       res
         .status(200)
         .json({ token: token, refreshToken: refreshToken.value, status: 200 });
@@ -276,6 +276,40 @@ const deleteUser = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const checkAuth = async (req, res) => {
+  try {
+    if (!req.validateToken) {
+      return res.status(401).json({ message: 'Unauthorized from check-auth API request' });
+    }
+    
+    let authorized = await adminOrManager(req.validateToken);
+    
+    if (!authorized) {
+      return res.status(401).json({ message: 'Unauthorized from check-auth API request' });
+    }
+
+    res.status(200).json({ user: req.validateToken});
+
+  } catch (error) {
+    console.log("Error while checking authorization: " + error);
+    res.status(500).json({ error: 'An error occurred while checking authorization' });
+  }
+};
+
+const logout = async (req, res) => {
+  // Set token to none and expire after 5 seconds
+  res.cookie('token', 'none', {
+      expires: new Date(Date.now() + 5 * 1000),
+      httpOnly: true,
+  })
+  res.cookie('refreshToken', 'none', {
+      expires: new Date(Date.now() + 5 * 1000),
+      httpOnly: true,
+  })
+  res
+      .status(200)
+      .json({ success: true, message: 'User logged out successfully' })
+}
 
 module.exports = {
   addUser,
@@ -285,4 +319,6 @@ module.exports = {
   findUserByQuery,
   updateUser,
   deleteUser,
+  checkAuth,
+  logout
 };

@@ -7,9 +7,9 @@ const secretKey = process.env.SECRET;
 
 const generateAccessToken = (userId, email, role) => {
   const accessToken = jwt.sign({ userId: userId, email: email, role: role }, secretKey, {
-    expiresIn: "15m",
+    expiresIn: "1h",
   });
-  console.log(accessToken);
+  // console.log(accessToken);
   return accessToken;
 };
 
@@ -85,47 +85,21 @@ const revokeRefreshToken = async (tokenId, revokedByIp) => {
 const createRefreshToken = async (userId, email, role, createdByIp) => {
   const existRefreshToken = await RefreshToken.findOne({ email });
   if (existRefreshToken) {
-    return updateRefreshToken(
-      existRefreshToken._id,
-      userId,
-      email,
-      role,
-      createdByIp
-    );
+    return updateRefreshToken(existRefreshToken._id, userId, email, role, createdByIp);
   } else {
     const value = generateRefreshToken();
     const expires = new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000); // Set expiration to 7 days
-    const refreshToken = new RefreshToken({
-      value,
-      userId,
-      email,
-      role,
-      expires,
-      createdByIp,
-      createdAt: new Date(),
-    });
+    const refreshToken = new RefreshToken({ value, userId, email, role, expires, createdByIp, createdAt: new Date()});
     await refreshToken.save();
     return refreshToken;
   }
 };
-const updateRefreshToken = async (
-  refreshTokenId,
-  userId,
-  email,
-  role,
-  createdByIp
-) => {
-  const value = generateRefreshToken();
+
+
+const updateRefreshToken = async (refreshTokenId, userId, email, role, createdByIp ) => {
+  // const value = generateRefreshToken();
   const expires = new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000); // Set expiration to 7 days
-  const updatedRefreshToken = {
-    value,
-    userId,
-    email,
-    role,
-    expires,
-    createdByIp,
-    createdAt: new Date(),
-  };
+  const updatedRefreshToken = { userId, email, role, expires, createdByIp, createdAt: new Date()};
   const refreshToken = await RefreshToken.findByIdAndUpdate(
     refreshTokenId,
     updatedRefreshToken,
@@ -141,25 +115,32 @@ const isTokenExpired = async (req, res, next) => {
   const refreshToken = req.cookies.refreshToken;
   const decodedWithValue = isAccessTokenExpired(token);
   req.validateToken = decodedWithValue;
+
   // Check if access token is expired
   if (decodedWithValue.expired) {
     try {
       // Use the refresh token to get a new access token
       const newAccessToken = await refreshAccessToken(refreshToken);
-      if (newAccessToken) {
-        res.cookie("token", newAccessToken);
-      }
-      // console.log(newAccessToken);
+      res.cookie("token", newAccessToken, { httpOnly: true });
+
       // Update the access token in your Postman environment or application's state
       // Make your request with the new access token
+
+      // Continue to the next middleware or route handler
+      return next();
     } catch (error) {
       // Handle errors (e.g., invalid refresh token, expired refresh token)
       console.error("Token refresh failed:", error.message);
-      // You may need to redirect to a login page or perform other actions
+
+      // Respond to the request immediately (e.g., with a 401 status)
+      return res.status(401).json({ message: 'Unauthorized' });
     }
   }
+
+  // If the token is not expired, continue to the next middleware or route handler
   next();
 };
+
 
 module.exports = {
   createRefreshToken,
