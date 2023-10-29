@@ -12,7 +12,6 @@ const { trackActivity } = require("../middleware/activityMiddleware");
 const addUser = async (req, res) => {
   try {
     let authorized = await adminOnly(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
     }
@@ -89,10 +88,11 @@ const loginUser = async (req, res) => {
         }
       );
 
-      const token = generateAccessToken(user._id, user.email, user.role);
+      const token = generateAccessToken(user._id, user.email, user.username, user.role);
       const refreshToken = await createRefreshToken(
         user._id,
         user.email,
+        user.username,
         user.role,
         "MustaphaIpAddress"
       );
@@ -112,7 +112,6 @@ const loginUser = async (req, res) => {
 const getAllUsers = async (req, res) => {
   try {
     let authorized = await adminOnly(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
     }
@@ -142,7 +141,6 @@ const getAllUsers = async (req, res) => {
 const findUserById = async (req, res) => {
   try {
     let authorized = await adminOnly(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
     }
@@ -167,7 +165,6 @@ const findUserById = async (req, res) => {
 const findUserByQuery = async (req, res) => {
   try {
     let authorized = adminOnly(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
     }
@@ -186,7 +183,6 @@ const findUserByQuery = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     let authorized = await adminOnly(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
     }
@@ -244,7 +240,6 @@ const updateUser = async (req, res) => {
 const deleteUser = async (req, res) => {
   try {
     let authorized = await adminOnly(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
     }

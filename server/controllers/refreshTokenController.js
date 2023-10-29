@@ -5,8 +5,8 @@ require("dotenv").config();
 
 const secretKey = process.env.SECRET;
 
-const generateAccessToken = (userId, email, role) => {
-  const accessToken = jwt.sign({ userId: userId, email: email, role: role }, secretKey, {
+const generateAccessToken = (userId, email, username, role) => {
+  const accessToken = jwt.sign({ userId: userId, email: email, username: username, role: role }, secretKey, {
     expiresIn: "1h",
   });
   // console.log(accessToken);
@@ -52,9 +52,9 @@ const refreshAccessToken = async (refreshToken) => {
   if (refreshTokenDocument.expires < new Date()) {
     throw new Error("Refresh token has expired.");
   }
-  const { userId, role, email } = refreshTokenDocument;
+  const { userId, role, email, username } = refreshTokenDocument;
   // If the refresh token is valid, generate a new access token
-  return generateAccessToken(userId, email, role);
+  return generateAccessToken(userId, email, username, role);
 };
 
 // Function to verify if the access token has expired
@@ -82,10 +82,10 @@ const revokeRefreshToken = async (tokenId, revokedByIp) => {
   }
 };
 
-const createRefreshToken = async (userId, email, role, createdByIp) => {
+const createRefreshToken = async (userId, email, username, role, createdByIp) => {
   const existRefreshToken = await RefreshToken.findOne({ email });
   if (existRefreshToken) {
-    return updateRefreshToken(existRefreshToken._id, userId, email, role, createdByIp);
+    return updateRefreshToken(existRefreshToken._id, userId, email, username, role, createdByIp);
   } else {
     const value = generateRefreshToken();
     const expires = new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000); // Set expiration to 7 days
@@ -96,10 +96,10 @@ const createRefreshToken = async (userId, email, role, createdByIp) => {
 };
 
 
-const updateRefreshToken = async (refreshTokenId, userId, email, role, createdByIp ) => {
+const updateRefreshToken = async (refreshTokenId, userId, email, username, role, createdByIp ) => {
   // const value = generateRefreshToken();
   const expires = new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000); // Set expiration to 7 days
-  const updatedRefreshToken = { userId, email, role, expires, createdByIp, createdAt: new Date()};
+  const updatedRefreshToken = { userId, email, username, role, expires, createdByIp, createdAt: new Date()};
   const refreshToken = await RefreshToken.findByIdAndUpdate(
     refreshTokenId,
     updatedRefreshToken,
