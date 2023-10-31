@@ -131,7 +131,7 @@ const getAllUsers = async (req, res) => {
         select: fieldsToRetrieve,
       };
 
-      const result = await User.paginate({}, options);
+      const result = await User.paginate({ role: { $ne: "admin" } }, options);
       return res.json(result);
     } catch (error) {
       return res.status(500).json({ error: "Error retrieving data" });
@@ -192,6 +192,10 @@ const updateUser = async (req, res) => {
     }
     const userId = req.params.id;
     const userUpdated = req.body;
+    if(userUpdated.password) {
+      const salt = await bcrypt.genSalt(10);
+      userUpdated.password = await bcrypt.hash(userUpdated.password, salt);
+    }
 
     userUpdated.lastUpdate = new Date();
 
