@@ -187,7 +187,6 @@ const loginCustomer = async (req, res) => {
 const getAllCustomers = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
     }
@@ -217,7 +216,6 @@ const getAllCustomers = async (req, res) => {
 const findCustomerByQuery = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
     }
@@ -319,7 +317,6 @@ const updateCustomer = async (req, res) => {
 const deleteCustomer = async (req, res) => {
   try {
     let authorized = await adminOnly(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
     }

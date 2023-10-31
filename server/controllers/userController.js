@@ -13,13 +13,13 @@ const addUser = async (req, res) => {
   try {
     let authorized = await adminOnly(req.validateToken);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
     let { firstName, lastName, username, email, password, role, active } =
       req.body;
 
     if (!firstName || !lastName || !email || !password || !role || !username) {
-      res.status(200).send({ message: "missing field" });
+      return res.status(403).send({ message: "missing field" });
     }
 
     const existingUser = await User.findOne({ email });
@@ -55,13 +55,13 @@ const addUser = async (req, res) => {
       if (!addActivity) {
         console.log("activity not added: ");
       }
-      res.status(200).json({ message: "User created successfully" });
+      return res.status(200).json({ message: "User created successfully" });
     } else {
-      res.status(403).json({ message: "Failed to create User" });
+      return res.status(403).json({ message: "Failed to create User" });
     }
   } catch (error) {
     console.log("Error in registration: " + error);
-    res.status(500).send(error.message);
+    return res.status(500).send(error.message);
   }
 };
 
@@ -70,14 +70,15 @@ const loginUser = async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
-    if (!user) res.status(404).json({ message: "User doesn't exist" });
+    if (!user) return res.status(404).json({ message: "Invalid Credentials" });
+
     const status = user.active;
-    if (!status) res.status(404).json({ message: "User not active" });
+    if (!status) return res.status(404).json({ message: "User not active" });
 
     const validPassword = await bcrypt.compare(password, user.password);
 
     if (!validPassword) {
-      res.status(400).json({ message: "Invalid Credentials" });
+      return  res.status(400).json({ message: "Invalid Credentials" });
     } else {
       const currentDate = new Date();
       await User.findByIdAndUpdate(
@@ -98,13 +99,13 @@ const loginUser = async (req, res) => {
       );
       res.cookie("token", token, { httpOnly: true });
       res.cookie("refreshToken", refreshToken.value, { httpOnly: true });
-      res
+      return res
         .status(200)
         .json({ token: token, refreshToken: refreshToken.value, status: 200 });
     }
   } catch (error) {
     console.log("Error with login: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -113,18 +114,21 @@ const getAllUsers = async (req, res) => {
   try {
     let authorized = await adminOnly(req.validateToken);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     const { page = 1, sort = "ASC" } = req.query;
     const limit = 10;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
+    const fieldsToRetrieve =
+      "firstName lastName username email role active";
 
     try {
       const options = {
         page: page,
         limit: limit,
         sort: sortOption,
+        select: fieldsToRetrieve,
       };
 
       const result = await User.paginate({}, options);
@@ -134,7 +138,7 @@ const getAllUsers = async (req, res) => {
     }
   } catch (error) {
     console.log("Error retrieving data: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -142,23 +146,23 @@ const findUserById = async (req, res) => {
   try {
     let authorized = await adminOnly(req.validateToken);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
     const userId = req.params.id;
     const check = mongoose.Types.ObjectId.isValid(userId);
     if (check) {
       const user = await User.findById(userId).select("-password");
       if (user) {
-        res.json(user);
+        return res.json(user);
       } else {
-        res.send("not found");
+        return res.send("not found");
       }
     } else {
-      res.send("not an objectID");
+      return res.send("not an objectID");
     }
   } catch (error) {
     console.log("Error while looking for the user by id: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -166,17 +170,17 @@ const findUserByQuery = async (req, res) => {
   try {
     let authorized = adminOnly(req.validateToken);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
     const query = req.query.query;
 
     const results = await User.find({
       username: { $regex: query, $options: "i" },
     });
-    res.json(results);
+    return res.json(results);
   } catch (error) {
     console.log("Error with query: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -184,7 +188,7 @@ const updateUser = async (req, res) => {
   try {
     let authorized = await adminOnly(req.validateToken);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
     const userId = req.params.id;
     const userUpdated = req.body;
@@ -224,16 +228,16 @@ const updateUser = async (req, res) => {
           console.log("activity not added: ");
         }
 
-        res.json({ "user updated successfully": user });
+        return res.json({ "user updated successfully": user });
       } else {
-        res.send("not found");
+        return res.send("not found");
       }
     } else {
-      res.send("not an objectID");
+      return res.send("not an objectID");
     }
   } catch (error) {
     console.log("Error while updating the user: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -241,7 +245,7 @@ const deleteUser = async (req, res) => {
   try {
     let authorized = await adminOnly(req.validateToken);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     const userId = req.params.id;
@@ -259,16 +263,16 @@ const deleteUser = async (req, res) => {
         if (!addActivity) {
           console.log("activity not added: ");
         }
-        res.send("user deleted successfully");
+        return res.send("user deleted successfully");
       } else {
-        res.send("not found");
+        return res.send("not found");
       }
     } else {
-      res.send("not an objectID");
+      return res.send("not an objectID");
     }
   } catch (error) {
     console.log("Error while deleting the user: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 const checkAuth = async (req, res) => {
@@ -283,11 +287,11 @@ const checkAuth = async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized from check-auth API request' });
     }
 
-    res.status(200).json({ user: req.validateToken});
+    return res.status(200).json({ user: req.validateToken});
 
   } catch (error) {
     console.log("Error while checking authorization: " + error);
-    res.status(500).json({ error: 'An error occurred while checking authorization' });
+    return res.status(500).json({ error: 'An error occurred while checking authorization' });
   }
 };
 
