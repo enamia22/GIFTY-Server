@@ -10,7 +10,7 @@ const addCategory = async (req, res) => {
     if (!authorized) {
       res.status(403).json({ message: "Not authorized" });
     }
-    const { categoryName } = req.body;
+    const { categoryName, active } = req.body;
 
     if (!categoryName) {
       res.send({ message: "missing name" });
@@ -26,6 +26,7 @@ const addCategory = async (req, res) => {
 
     const newCategory = new Category({
       categoryName: categoryName,
+      active: active,
       creationDate: currentDate,
     });
     const createdCategory = await newCategory.save();
