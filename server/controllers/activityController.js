@@ -1,5 +1,33 @@
+const { adminOnly } = require("../middleware/authMiddleware");
 const Activity = require("../models/Activity");
+const getAllUsersActivities = async (req, res) => {
+  try {
+    let authorized = await adminOnly(req.validateToken);
+    if (!authorized) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
 
+    const { page = 1, sort = "ASC" } = req.query;
+    const limit = 10;
+    const sortOption = sort === "DESC" ? "-_id" : "_id";
+
+    try {
+      const options = {
+        page: page,
+        limit: limit,
+        sort: sortOption,
+      };
+
+      const result = await Activity.paginate({}, options);
+      return res.json(result);
+    } catch (error) {
+      return res.status(500).json({ error: "Error retrieving data" });
+    }
+  } catch (error) {
+    console.log("Error retrieving data: " + error);
+    return res.status(500).json({ error: error.message });
+  }
+}
 const addActivity = async (userId, text, itemId, itemName) => {
   try {
     let createdActivity;
@@ -45,4 +73,5 @@ const addActivity = async (userId, text, itemId, itemName) => {
 
 module.exports = {
   addActivity,
+  getAllUsersActivities
 };
