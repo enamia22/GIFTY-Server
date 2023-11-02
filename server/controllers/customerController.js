@@ -101,7 +101,7 @@ const addCustomer = async (req, res) => {
   try {
     let { firstName, lastName, email, password, active } = req.body;
     if (!firstName || !lastName || !email || !password) {
-      res.status(200).send({ message: "missing field" });
+      return res.status(200).send({ message: "missing field" });
     }
 
     const existingCustomer = await Customer.findOne({ email });
@@ -139,7 +139,7 @@ const addCustomer = async (req, res) => {
     main(email, username, confirmationLink).catch(console.error);
     res.cookie("token", token);
     res.cookie("refreshToken", refreshToken.value);
-    res.status(201).json({
+    return res.status(201).json({
       message: "Customer created successfully",
       token: token,
       status: 201,
@@ -147,7 +147,7 @@ const addCustomer = async (req, res) => {
     });
   } catch (error) {
     console.log("Error in registration: " + error);
-    res.status(500).send(error);
+    return res.status(500).send(error);
   }
 };
 
@@ -156,14 +156,18 @@ const loginCustomer = async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await Customer.findOne({ email });
-    if (!user) res.status(404).json({ message: "Customer doesn't exist" });
+    if (!user)
+      return res.status(404).json({ message: "Customer doesn't exist" });
     const status = user.active;
-    if (!status) res.status(404).json({ message: "Customer not active" });
+    if (!status)
+      return res.status(404).json({ message: "Customer not active" });
 
     const validPassword = await bcrypt.compare(password, user.password);
 
     if (!validPassword) {
-      res.status(401).json({ message: "Invalid Credentials", status: 401 });
+      return res
+        .status(401)
+        .json({ message: "Invalid Credentials", status: 401 });
     } else {
       const token = await generateAccessToken(user._id, user.email, user.role);
       const refreshToken = await createRefreshToken(
@@ -174,12 +178,12 @@ const loginCustomer = async (req, res) => {
       );
       res.cookie("token", token);
       res.cookie("refreshToken", refreshToken.value);
-      res
+      return res
         .status(200)
         .json({ token: token, refreshToken: refreshToken.value, status: 200 });
     }
   } catch (error) {
-    res.status(500).json({ error: error });
+    return res.status(500).json({ error: error });
   }
 };
 
@@ -188,7 +192,7 @@ const getAllCustomers = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
     const { page = 1, sort = "ASC" } = req.query;
     const limit = 10;
@@ -208,7 +212,7 @@ const getAllCustomers = async (req, res) => {
       return res.status(500).json({ error: "Error retrieving data" });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -217,7 +221,7 @@ const findCustomerByQuery = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     const query = req.query.query;
@@ -228,10 +232,10 @@ const findCustomerByQuery = async (req, res) => {
       },
       "-password"
     );
-    res.json(results);
+    return res.json(results);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "An error occurred" });
+    return res.status(500).json({ error: "An error occurred" });
   }
 };
 //search for a Customer By Id
@@ -249,15 +253,15 @@ const findCustomerById = async (req, res) => {
           "-password"
         );
         if (customer) {
-          res.json(customer);
+          return res.json(customer);
         } else {
-          res.send("Customer not found");
+          return res.send("Customer not found");
         }
       } else {
-        res.send("not an objectID");
+        return res.send("not an objectID");
       }
     } else {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
   } catch (err) {
     console.log(err.message);
@@ -273,7 +277,7 @@ const updateCustomer = async (req, res) => {
     const customerTokenId = req.validateToken.userId;
 
     if (!authorized && customerTokenId !== customerId) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     const customerUpdated = req.body;
@@ -300,16 +304,16 @@ const updateCustomer = async (req, res) => {
             new: true,
           }
         );
-        res.json(customer);
+        return res.json(customer);
       } else {
-        res.send("not found");
+        return res.send("not found");
       }
     } else {
-      res.send("not an objectID");
+      return res.send("not an objectID");
     }
   } catch (err) {
     console.log(err.message);
-    res.status(500).json({ error: "Internal Server Error" }); // Send an error response to the client
+    return res.status(500).json({ error: "Internal Server Error" }); // Send an error response to the client
   }
 };
 
@@ -318,7 +322,7 @@ const deleteCustomer = async (req, res) => {
   try {
     let authorized = await adminOnly(req.validateToken);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     const customerId = req.params.id;
@@ -327,12 +331,12 @@ const deleteCustomer = async (req, res) => {
     if (check) {
       const existed = await Customer.findByIdAndDelete(customerId);
       if (existed) {
-        res.send("Customer deleted successfully");
+        return res.send("Customer deleted successfully");
       } else {
-        res.send("not found");
+        return res.send("not found");
       }
     } else {
-      res.send("not an objectID");
+      return res.send("not an objectID");
     }
   } catch {
     console.log(err.message);
@@ -347,7 +351,9 @@ const validateProfile = async (req, res) => {
   if (customer) {
     if (customer.confirmed) {
       // Email is already confirmed
-      res.json({ message: "Email is already confirmed. You can log in." });
+      return res.json({
+        message: "Email is already confirmed. You can log in.",
+      });
     } else if (customer.confirmationToken === token) {
       const customerUpdated = { confirmed: true };
       const updatedCustomer = await Customer.findByIdAndUpdate(
@@ -358,12 +364,14 @@ const validateProfile = async (req, res) => {
         }
       );
       if (updatedCustomer)
-        res.json({ message: "Email confirmed. You can now log in." });
+        return res.json({ message: "Email confirmed. You can now log in." });
     } else {
-      res.json("Invalid Token");
+      return res.json("Invalid Token");
     }
   } else {
-    res.status(400).json({ message: "Invalid or expired confirmation link." });
+    return res
+      .status(400)
+      .json({ message: "Invalid or expired confirmation link." });
   }
 };
 

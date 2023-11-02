@@ -6,14 +6,13 @@ const { trackActivity } = require("../middleware/activityMiddleware");
 const addCategory = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
-    const { categoryName } = req.body;
+    const { categoryName, active } = req.body;
 
     if (!categoryName) {
-      res.send({ message: "missing name" });
+      return res.send({ message: "missing name" });
     }
 
     const existingCategory = await Category.findOne({ categoryName });
@@ -26,17 +25,23 @@ const addCategory = async (req, res) => {
 
     const newCategory = new Category({
       categoryName: categoryName,
+      active: active,
       creationDate: currentDate,
     });
     const createdCategory = await newCategory.save();
     if (!createdCategory) {
       return res.json({ message: "Category was not created" });
     } else {
-      const addActivity = await trackActivity(req.validateToken.userId, 'add category', createdCategory._id, categoryName);
-      if(!addActivity){
+      const addActivity = await trackActivity(
+        req.validateToken.userId,
+        "add category",
+        createdCategory._id,
+        categoryName
+      );
+      if (!addActivity) {
         console.log("activity not added: ");
       }
-      res.json({ message: "Category created successfully" });
+      return res.json({ message: "Category created successfully" });
     }
   } catch (e) {
     console.log(e.message);
@@ -47,9 +52,9 @@ const getAllCategories = async (req, res) => {
   try {
     let authorized = false;
 
-    if(req.validateToken){
+    if (req.validateToken) {
       const checkIfAuthorized = await adminOrManager(req.validateToken);
-      if(checkIfAuthorized){
+      if (checkIfAuthorized) {
         authorized = true;
       }
     }
@@ -65,7 +70,7 @@ const getAllCategories = async (req, res) => {
         sort: sortOption,
       };
       let query = {};
-      
+
       if (!authorized) {
         // For not authorized users, filter by status true
         query.active = true;
@@ -85,9 +90,9 @@ const findCategoryByQuery = async (req, res) => {
   try {
     let authorized = false;
 
-    if(req.validateToken){
+    if (req.validateToken) {
       const checkIfAuthorized = await adminOrManager(req.validateToken);
-      if(checkIfAuthorized){
+      if (checkIfAuthorized) {
         authorized = true;
       }
     }
@@ -102,9 +107,9 @@ const findCategoryByQuery = async (req, res) => {
       limit: limit,
       sort: sortOption,
     };
-      
+
     // Define the query to filter categories based on the categoryName using regex
-    const queryRegex = { categoryName: { $regex: query, $options: "i" }, };
+    const queryRegex = { categoryName: { $regex: query, $options: "i" } };
 
     if (!authorized) {
       // For not authorized users, filter by status true
@@ -113,11 +118,10 @@ const findCategoryByQuery = async (req, res) => {
 
     const results = await Category.paginate(queryRegex, options);
 
-
-    res.json(results);
+    return res.json(results);
   } catch (error) {
     console.log("Error with query: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -125,9 +129,9 @@ const findCategoryById = async (req, res) => {
   try {
     let authorized = false;
 
-    if(req.validateToken){
+    if (req.validateToken) {
       const checkIfAuthorized = await adminOrManager(req.validateToken);
-      if(checkIfAuthorized){
+      if (checkIfAuthorized) {
         authorized = true;
       }
     }
@@ -143,25 +147,24 @@ const findCategoryById = async (req, res) => {
 
       const category = await Category.findOne(query);
       if (category) {
-        res.json(category);
+        return res.json(category);
       } else {
-        res.send("not found");
+        return res.send("not found");
       }
     } else {
-      res.send("not an objectID");
+      return res.send("not an objectID");
     }
   } catch (error) {
     console.log("Error while looking for the category by id: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
 const updateCategory = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     const categoryId = req.params.id;
@@ -189,33 +192,37 @@ const updateCategory = async (req, res) => {
             new: true,
           }
         );
-        if(category){
-          const addActivity = await trackActivity(req.validateToken.userId, 'update category', category._id, category.categoryName);
-          if(!addActivity){
+        if (category) {
+          const addActivity = await trackActivity(
+            req.validateToken.userId,
+            "update category",
+            category._id,
+            category.categoryName
+          );
+          if (!addActivity) {
             console.log("activity not added: ");
           }
-          res.json({ "category updated successfully": category });
-        }else{
-          res.status(400).json({ error: "category not updated" });
+          return res.json({ "category updated successfully": category });
+        } else {
+          return res.status(400).json({ error: "category not updated" });
         }
       } else {
-        res.send("not found");
+        return res.send("not found");
       }
     } else {
-      res.send("not an objectID");
+      return res.send("not an objectID");
     }
   } catch (error) {
     console.log("Error while updating the user: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
 const deleteCategory = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     const categoryId = req.params.id;
@@ -224,20 +231,25 @@ const deleteCategory = async (req, res) => {
     if (check) {
       const category = await Category.findByIdAndDelete(categoryId);
       if (category) {
-        const addActivity = await trackActivity(req.validateToken.userId, 'delete category', categoryId, category.categoryName);
-        if(!addActivity){
+        const addActivity = await trackActivity(
+          req.validateToken.userId,
+          "delete category",
+          categoryId,
+          category.categoryName
+        );
+        if (!addActivity) {
           console.log("activity not added: ");
         }
-        res.send("category deleted successfully");
+        return res.send("category deleted successfully");
       } else {
-        res.send("not found");
+        return res.send("not found");
       }
     } else {
-      res.send("not an objectID");
+      return res.send("not an objectID");
     }
   } catch (error) {
     console.log("Error while deleting the subcategory: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 

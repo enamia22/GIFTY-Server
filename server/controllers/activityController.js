@@ -45,7 +45,7 @@ const addActivity = async (userId, text, itemId, itemName) => {
         creationDate: currentDate,
       });
       createdActivity = await existingUserActivities.save();
-    }else{
+    } else {
       const newActivity = new Activity({
         userId: userId,
         activities: [
@@ -54,22 +54,21 @@ const addActivity = async (userId, text, itemId, itemName) => {
             itemId: itemId,
             itemName: itemName,
             creationDate: currentDate,
-          }
-        ]
+          },
+        ],
       });
       createdActivity = await newActivity.save();
     }
 
     if (!createdActivity) {
-      return false
+      return false;
     } else {
-      return true
+      return true;
     }
   } catch (e) {
     console.log(e.message);
   }
 };
-
 
 module.exports = {
   addActivity,

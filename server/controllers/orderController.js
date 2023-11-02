@@ -45,9 +45,8 @@ const addOrder = async (req, res) => {
 const getAllOrders = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     const { page = 1, sort = "ASC" } = req.query;
@@ -109,7 +108,6 @@ const getOrderById = async (req, res) => {
     const customerId = new mongoose.Types.ObjectId(req.validateToken.userId);
 
     if (authorized || customerId.equals(customerOrderId)) {
-
       async function getCustomerInfo(customerId) {
         const customer = await Customer.findById(customerId);
         if (customer) {
@@ -156,15 +154,15 @@ const getOrderById = async (req, res) => {
             productDetails: productInfo,
           };
 
-          res.json(orderWithCustomerInfo);
+          return res.json(orderWithCustomerInfo);
         } else {
-          res.send("Order not found");
+          return res.send("Order not found");
         }
       } else {
-        res.send("not a valid objectID");
+        return res.send("not a valid objectID");
       }
     } else {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
   } catch (error) {
     console.log("Error retrieving data: " + error);
@@ -175,7 +173,7 @@ const updateOrder = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     const orderId = req.params.id;
@@ -191,16 +189,19 @@ const updateOrder = async (req, res) => {
 
         await order.save();
 
-        res.json({ message: "Order status updated successfully", order });
+        return res.json({
+          message: "Order status updated successfully",
+          order,
+        });
       } else {
-        res.status(404).json({ message: "Order not found" });
+        return res.status(404).json({ message: "Order not found" });
       }
     } else {
-      res.status(400).json({ message: "Invalid ObjectID" });
+      return res.status(400).json({ message: "Invalid ObjectID" });
     }
   } catch (error) {
     console.log("Error while updating the order: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
