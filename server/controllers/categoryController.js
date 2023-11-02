@@ -6,7 +6,6 @@ const { trackActivity } = require("../middleware/activityMiddleware");
 const addCategory = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       return res.status(403).json({ message: "Not authorized" });
     }
@@ -164,7 +163,6 @@ const findCategoryById = async (req, res) => {
 const updateCategory = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       return res.status(403).json({ message: "Not authorized" });
     }
@@ -223,7 +221,6 @@ const updateCategory = async (req, res) => {
 const deleteCategory = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       return res.status(403).json({ message: "Not authorized" });
     }

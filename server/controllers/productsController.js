@@ -296,7 +296,6 @@ const findProductByQuery = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       return res.status(403).json({ message: "Not authorized" });
     }
@@ -374,7 +373,6 @@ const updateProduct = async (req, res) => {
 const deleteProduct = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       return res.status(403).json({ message: "Not authorized" });
     }

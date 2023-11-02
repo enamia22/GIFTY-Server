@@ -13,7 +13,6 @@ const generateAccessToken = (userId, email, username, role) => {
       expiresIn: "1h",
     }
   );
-  // console.log(accessToken);
   return accessToken;
 };
 

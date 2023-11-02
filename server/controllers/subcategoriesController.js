@@ -7,7 +7,6 @@ const { trackActivity } = require("../middleware/activityMiddleware");
 const addSubcategory = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       return res.status(403).json({ message: "Not authorized" });
     }
@@ -169,7 +168,6 @@ const findSubcategoryByQuery = async (req, res) => {
 const updateSubcategory = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       return res.status(403).json({ message: "Not authorized" });
     }
@@ -200,12 +198,6 @@ const updateSubcategory = async (req, res) => {
           }
         );
         if (subcategory) {
-          console.log(
-            req.validateToken.userId,
-            "update subcategory",
-            subcategoryId,
-            subCategory.subcategoryName
-          );
           const addActivity = await trackActivity(
             req.validateToken.userId,
             "update subcategory",
@@ -234,7 +226,6 @@ const updateSubcategory = async (req, res) => {
 const deleteSubcategory = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
-    console.log(authorized);
     if (!authorized) {
       return res.status(403).json({ message: "Not authorized" });
     }

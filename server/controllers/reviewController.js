@@ -6,7 +6,6 @@ const mongoose = require("mongoose");
 const submitProductReview = async (req, res) => {
   try {
     let { productId, customerId, text, rating } = req.body;
-    // return console.log (productId, customerId, text, rating)
 
     // Validate if the product and customer exist
     const product = await Product.findById(productId);
