@@ -4,8 +4,8 @@ const { adminOrManager } = require("../middleware/authMiddleware");
 const { trackActivity } = require("../middleware/activityMiddleware");
 const mongoose = require("mongoose");
 var uniqid = require("uniqid");
-const { validationResult } = require('express-validator');
-const { sanitizeRequestBody } = require('../middleware/dataValidation');
+const { validationResult } = require("express-validator");
+const { sanitizeRequestBody } = require("../middleware/dataValidation");
 
 //Add Subcategory
 const addProduct = async (req, res) => {
@@ -30,20 +30,28 @@ const addProduct = async (req, res) => {
       price,
       discountPrice,
       options,
-      pack
+      pack,
     } = req.body;
 
     // Validation: Check if required fields are missing
-    if (!productName || !shortDescription || !longDescription || !subcategoryId || !price || !discountPrice || !options) {
+    if (
+      !productName ||
+      !shortDescription ||
+      !longDescription ||
+      !subcategoryId ||
+      !price ||
+      !discountPrice ||
+      !options
+    ) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-    const createProduct = sanitizeRequestBody(req);    
+    const createProduct = sanitizeRequestBody(req);
     // If there are validation errors, return a response with the errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    
+
     const existingProduct = await Product.findOne({ productName });
 
     if (existingProduct) {
@@ -71,8 +79,13 @@ const addProduct = async (req, res) => {
     if (!createdProduct) {
       return res.status(500).json({ message: "Product not created" });
     }
-    const addActivity = await trackActivity(req.validateToken.userId, 'add Product', createdProduct._id, createProduct.productName);
-    if(!addActivity){
+    const addActivity = await trackActivity(
+      req.validateToken.userId,
+      "add Product",
+      createdProduct._id,
+      createProduct.productName
+    );
+    if (!addActivity) {
       console.log("activity not added: ");
     }
     return res.status(201).json({ message: "Product created with success" });
@@ -82,15 +95,14 @@ const addProduct = async (req, res) => {
   }
 };
 
-
 //get all Products
 const getAllProducts = async (req, res) => {
   try {
     let authorized = false;
 
-    if(req.validateToken){
+    if (req.validateToken) {
       const checkIfAuthorized = await adminOrManager(req.validateToken);
-      if(checkIfAuthorized){
+      if (checkIfAuthorized) {
         authorized = true;
       }
     }
@@ -108,20 +120,20 @@ const getAllProducts = async (req, res) => {
         sort: sortOption,
         select: fieldsToRetrieve,
       };
-      
+
       let query = {};
-      
+
       if (!authorized) {
         // For not authorized users, filter by status true
         query.active = true;
       }
-      
+
       const result = await Product.paginate(query, options);
 
       async function getSubCatName(item) {
         try {
           const check = mongoose.Types.ObjectId.isValid(item);
-          if(check){
+          if (check) {
             const subcategory = await SubCategory.findById(item);
             if (subcategory) {
               const subcategoryName = subcategory.subcategoryName;
@@ -129,23 +141,21 @@ const getAllProducts = async (req, res) => {
             } else {
               return null; // Handle the case where the document is not found
             }
-          }else{
-            return null
+          } else {
+            return null;
           }
-
         } catch (error) {
           console.error("Error while retrieving subcategory:", error);
           return null; // Handle the error
         }
       }
-      
+
       async function updateArray(array) {
         const promises = array.map(async (item) => ({
           ...item._doc,
           subcategoryName: await getSubCatName(item.subcategoryId),
-          hello: 'hello'
+          hello: "hello",
         }));
-
 
         return Promise.all(promises);
       }
@@ -162,7 +172,7 @@ const getAllProducts = async (req, res) => {
     }
   } catch (error) {
     console.log("Error retrieving data: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -170,9 +180,9 @@ const findProductById = async (req, res) => {
   try {
     let authorized = false;
 
-    if(req.validateToken){
+    if (req.validateToken) {
       const checkIfAuthorized = await adminOrManager(req.validateToken);
-      if(checkIfAuthorized){
+      if (checkIfAuthorized) {
         authorized = true;
       }
     }
@@ -185,7 +195,7 @@ const findProductById = async (req, res) => {
         // For not authorized users, filter by status true
         query.active = true;
       }
-      
+
       const product = await Product.findOne(query);
 
       if (product) {
@@ -205,14 +215,14 @@ const findProductById = async (req, res) => {
 
         // res.status(201).json(product);
       } else {
-        res.status(404).send("not found");
+        return res.status(404).send("not found");
       }
     } else {
-      res.status(404).send("not an objectID");
+      return res.status(404).send("not an objectID");
     }
   } catch (error) {
     console.log("Error while looking for the product by id: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -220,9 +230,9 @@ const findProductByQuery = async (req, res) => {
   try {
     let authorized = false;
 
-    if(req.validateToken){
+    if (req.validateToken) {
       const checkIfAuthorized = await adminOrManager(req.validateToken);
-      if(checkIfAuthorized){
+      if (checkIfAuthorized) {
         authorized = true;
       }
     }
@@ -242,9 +252,9 @@ const findProductByQuery = async (req, res) => {
       sort: sortOption,
       select: fieldsToRetrieve,
     };
-      
+
     // Define the query to filter products based on the productName using regex
-    const queryRegex = { productName: { $regex: query, $options: "i" }, };
+    const queryRegex = { productName: { $regex: query, $options: "i" } };
 
     if (!authorized) {
       // For not authorized users, filter by status true
@@ -279,7 +289,7 @@ const findProductByQuery = async (req, res) => {
       });
   } catch (error) {
     console.log("Error with query: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -288,7 +298,7 @@ const updateProduct = async (req, res) => {
     let authorized = await adminOrManager(req.validateToken);
     console.log(authorized);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
     let imageProduct;
 
@@ -297,13 +307,13 @@ const updateProduct = async (req, res) => {
     }
     const productId = req.params.id;
 
-    const productUpdated = sanitizeRequestBody(req);    
+    const productUpdated = sanitizeRequestBody(req);
     // If there are validation errors, return a response with the errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    
+
     productUpdated.productImage = imageProduct;
 
     productUpdated.lastUpdate = new Date();
@@ -322,33 +332,42 @@ const updateProduct = async (req, res) => {
         if (existingProduct)
           return res.status(400).json({ error: "product already exits" });
 
-          const updated = await Product.findByIdAndUpdate(
-            productId,
-            productUpdated,
-            {
-              new: true,
-            }
+        const updated = await Product.findByIdAndUpdate(
+          productId,
+          productUpdated,
+          {
+            new: true,
+          }
         );
-        if(updated){
-          const addActivity = await trackActivity(req.validateToken.userId, 'update Product', productId, productUpdated.productName);
-          if(!addActivity){
+        if (updated) {
+          const addActivity = await trackActivity(
+            req.validateToken.userId,
+            "update Product",
+            productId,
+            productUpdated.productName
+          );
+          if (!addActivity) {
             console.log("activity not added: ");
           }
 
-          res.status(200).json({ "product updated successfuly": updated });
-        }else{
+          return res
+            .status(200)
+            .json({ "product updated successfuly": updated });
+        } else {
           console.log("Error while updating the product");
-          res.status(500).json({ error: "Error while updating the product" });
+          return res
+            .status(500)
+            .json({ error: "Error while updating the product" });
         }
       } else {
-        res.status(404).send("not found");
+        return res.status(404).send("not found");
       }
     } else {
-      res.status(404).send("not an objectID");
+      return res.status(404).send("not an objectID");
     }
   } catch (error) {
     console.log("Error while updating the product: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -357,7 +376,7 @@ const deleteProduct = async (req, res) => {
     let authorized = await adminOrManager(req.validateToken);
     console.log(authorized);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     const productId = req.params.id;
@@ -366,20 +385,25 @@ const deleteProduct = async (req, res) => {
     if (check) {
       const product = await Product.findByIdAndDelete(productId);
       if (product) {
-        const addActivity = await trackActivity(req.validateToken.userId, 'delete Product', productId, product.productName);
-        if(!addActivity){
+        const addActivity = await trackActivity(
+          req.validateToken.userId,
+          "delete Product",
+          productId,
+          product.productName
+        );
+        if (!addActivity) {
           console.log("activity not added: ");
         }
-        res.status(200).send("product deleted successfully");
+        return res.status(200).send("product deleted successfully");
       } else {
-        res.status(404).send("not found");
+        return res.status(404).send("not found");
       }
     } else {
-      res.status(404).send("not an objectID");
+      return res.status(404).send("not an objectID");
     }
   } catch (error) {
     console.log("Error while deleting the product: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 

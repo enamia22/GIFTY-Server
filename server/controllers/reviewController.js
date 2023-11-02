@@ -3,14 +3,12 @@ const Product = require("../models/Product"); // Import your product model
 const Review = require("../models/Review");
 const mongoose = require("mongoose");
 
-
 const submitProductReview = async (req, res) => {
   try {
     let { productId, customerId, text, rating } = req.body;
     // return console.log (productId, customerId, text, rating)
 
-
-    // Validate if the product and customer exist  
+    // Validate if the product and customer exist
     const product = await Product.findById(productId);
     const customer = await Customer.findById(customerId);
     if (!product || !customer) {
@@ -26,7 +24,7 @@ const submitProductReview = async (req, res) => {
       rating,
       timestamp: new Date(),
     });
-    
+
     await newReview.save();
     return res.status(201).json({ message: "Review created successfully" });
   } catch (error) {
@@ -35,14 +33,13 @@ const submitProductReview = async (req, res) => {
   }
 };
 
-
 const getAllReviews = async (req, res) => {
-  const { page = 1, sort = 'ASC' } = req.query;
+  const { page = 1, sort = "ASC" } = req.query;
   const limit = 10;
-  const sortOption = sort === 'DESC' ? '-_id' : '_id';
+  const sortOption = sort === "DESC" ? "-_id" : "_id";
 
   // Extract product ID from URL parameters
-  const productId = req.params.productId; 
+  const productId = req.params.productId;
   // Assuming the parameter name is 'productId' in the URL
 
   try {
@@ -56,7 +53,7 @@ const getAllReviews = async (req, res) => {
     const result = await Review.paginate({ productId: productId }, options);
     return res.json(result);
   } catch (error) {
-    return res.status(500).json({ error: 'Error retrieving data' });
+    return res.status(500).json({ error: "Error retrieving data" });
   }
 };
 
@@ -69,21 +66,20 @@ const deleteReview = async (req, res) => {
     if (check) {
       const existed = await Review.findByIdAndDelete(reviewId);
       if (existed) {
-        res.send("review deleted successfully");
+        return res.send("review deleted successfully");
       } else {
-        res.send("not found");
+        return res.send("not found");
       }
     } else {
-      res.send("not an objectID");
+      return res.send("not an objectID");
     }
   } catch {
     console.log(err.message);
   }
-}; 
-
+};
 
 module.exports = {
-    submitProductReview,
-    getAllReviews,
-    deleteReview
+  submitProductReview,
+  getAllReviews,
+  deleteReview,
 };

@@ -9,12 +9,12 @@ const addSubcategory = async (req, res) => {
     let authorized = await adminOrManager(req.validateToken);
     console.log(authorized);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
     let { subcategoryName, categoryId, active } = req.body;
 
     if (!subcategoryName || !categoryId) {
-      res.status(200).send({ message: "missing field" });
+      return res.status(200).send({ message: "missing field" });
     }
 
     const existingCategory = await SubCategory.findOne({ subcategoryName });
@@ -34,14 +34,19 @@ const addSubcategory = async (req, res) => {
     if (!createdCategory)
       return res.json({ message: "subcategory not created" });
 
-    const addActivity = await trackActivity(req.validateToken.userId, 'add subcategory', createdCategory._id, subcategoryName);
-    if(!addActivity){
+    const addActivity = await trackActivity(
+      req.validateToken.userId,
+      "add subcategory",
+      createdCategory._id,
+      subcategoryName
+    );
+    if (!addActivity) {
       console.log("activity not added: ");
     }
-    res.json({ message: "subcategory created with success" });
+    return res.json({ message: "subcategory created with success" });
   } catch (error) {
     console.log("Error while adding new subcategory: " + error);
-    res.status(500).send(error.message);
+    return res.status(500).send(error.message);
   }
 };
 
@@ -50,9 +55,9 @@ const getAllSubcategories = async (req, res) => {
   try {
     let authorized = false;
 
-    if(req.validateToken){
+    if (req.validateToken) {
       const checkIfAuthorized = await adminOrManager(req.validateToken);
-      if(checkIfAuthorized){
+      if (checkIfAuthorized) {
         authorized = true;
       }
     }
@@ -67,9 +72,9 @@ const getAllSubcategories = async (req, res) => {
         limit: limit,
         sort: sortOption,
       };
-      
+
       let query = {};
-      
+
       if (!authorized) {
         // For not authorized users, filter by status true
         query.active = true;
@@ -82,7 +87,7 @@ const getAllSubcategories = async (req, res) => {
     }
   } catch (error) {
     console.log("Error retrieving data: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -90,9 +95,9 @@ const findSubcategoryById = async (req, res) => {
   try {
     let authorized = false;
 
-    if(req.validateToken){
+    if (req.validateToken) {
       const checkIfAuthorized = await adminOrManager(req.validateToken);
-      if(checkIfAuthorized){
+      if (checkIfAuthorized) {
         authorized = true;
       }
     }
@@ -109,16 +114,16 @@ const findSubcategoryById = async (req, res) => {
       const subcategory = await SubCategory.findOne(query);
 
       if (subcategory) {
-        res.json(subcategory);
+        return res.json(subcategory);
       } else {
-        res.send("not found");
+        return res.send("not found");
       }
     } else {
-      res.send("not an objectID");
+      return res.send("not an objectID");
     }
   } catch (error) {
     console.log("Error while looking for the subcategory by id: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -126,9 +131,9 @@ const findSubcategoryByQuery = async (req, res) => {
   try {
     let authorized = false;
 
-    if(req.validateToken){
+    if (req.validateToken) {
       const checkIfAuthorized = await adminOrManager(req.validateToken);
-      if(checkIfAuthorized){
+      if (checkIfAuthorized) {
         authorized = true;
       }
     }
@@ -143,9 +148,9 @@ const findSubcategoryByQuery = async (req, res) => {
       limit: limit,
       sort: sortOption,
     };
-      
+
     // Define the query to filter subcategories based on the subcategoryName using regex
-    const queryRegex = { subcategoryName: { $regex: query, $options: "i" }, };
+    const queryRegex = { subcategoryName: { $regex: query, $options: "i" } };
 
     if (!authorized) {
       // For not authorized users, filter by status true
@@ -154,10 +159,10 @@ const findSubcategoryByQuery = async (req, res) => {
 
     const results = await SubCategory.paginate(queryRegex, options);
 
-    res.json(results);
+    return res.json(results);
   } catch (error) {
     console.log("Error with query: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -166,7 +171,7 @@ const updateSubcategory = async (req, res) => {
     let authorized = await adminOrManager(req.validateToken);
     console.log(authorized);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     const subcategoryId = req.params.id;
@@ -176,7 +181,7 @@ const updateSubcategory = async (req, res) => {
 
     const check = mongoose.Types.ObjectId.isValid(subcategoryId);
     if (check) {
-      const subCategory = await SubCategory.findById(subcategoryId)
+      const subCategory = await SubCategory.findById(subcategoryId);
       if (subCategory) {
         const existingCategory = await SubCategory.findOne({
           $and: [
@@ -194,25 +199,35 @@ const updateSubcategory = async (req, res) => {
             new: true,
           }
         );
-        if(subcategory){
-          console.log(req.validateToken.userId, 'update subcategory', subcategoryId, subCategory.subcategoryName)
-          const addActivity = await trackActivity(req.validateToken.userId, 'update subcategory', subcategoryId, subCategory.subcategoryName);
-          if(!addActivity){
+        if (subcategory) {
+          console.log(
+            req.validateToken.userId,
+            "update subcategory",
+            subcategoryId,
+            subCategory.subcategoryName
+          );
+          const addActivity = await trackActivity(
+            req.validateToken.userId,
+            "update subcategory",
+            subcategoryId,
+            subCategory.subcategoryName
+          );
+          if (!addActivity) {
             console.log("activity not added: ");
           }
-          res.json({ "subcategory updated successfuly": subcategory });
-        }else{
-          res.send("subcategory not updated");
+          return res.json({ "subcategory updated successfuly": subcategory });
+        } else {
+          return res.send("subcategory not updated");
         }
       } else {
-        res.send("not found");
+        return res.send("not found");
       }
     } else {
-      res.send("not an objectID");
+      return res.send("not an objectID");
     }
   } catch (error) {
     console.log("Error while updating the user: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -221,7 +236,7 @@ const deleteSubcategory = async (req, res) => {
     let authorized = await adminOrManager(req.validateToken);
     console.log(authorized);
     if (!authorized) {
-      res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     const subcategoryId = req.params.id;
@@ -230,20 +245,25 @@ const deleteSubcategory = async (req, res) => {
     if (check) {
       const subcategory = await SubCategory.findByIdAndDelete(subcategoryId);
       if (subcategory) {
-        const addActivity = await trackActivity(req.validateToken.userId, 'delete subcategory', subcategoryId, subcategory.subcategoryName);
-        if(!addActivity){
+        const addActivity = await trackActivity(
+          req.validateToken.userId,
+          "delete subcategory",
+          subcategoryId,
+          subcategory.subcategoryName
+        );
+        if (!addActivity) {
           console.log("activity not added: ");
         }
-        res.send("subcategory deleted successfully");
+        return res.send("subcategory deleted successfully");
       } else {
-        res.send("not found");
+        return res.send("not found");
       }
     } else {
-      res.send("not an objectID");
+      return res.send("not an objectID");
     }
   } catch (error) {
     console.log("Error while deleting the subcategory: " + error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 

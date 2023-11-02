@@ -78,7 +78,7 @@ const loginUser = async (req, res) => {
     const validPassword = await bcrypt.compare(password, user.password);
 
     if (!validPassword) {
-      return  res.status(400).json({ message: "Invalid Credentials" });
+      return res.status(400).json({ message: "Invalid Credentials" });
     } else {
       const currentDate = new Date();
       await User.findByIdAndUpdate(
@@ -89,7 +89,12 @@ const loginUser = async (req, res) => {
         }
       );
 
-      const token = generateAccessToken(user._id, user.email, user.username, user.role);
+      const token = generateAccessToken(
+        user._id,
+        user.email,
+        user.username,
+        user.role
+      );
       const refreshToken = await createRefreshToken(
         user._id,
         user.email,
@@ -120,8 +125,7 @@ const getAllUsers = async (req, res) => {
     const { page = 1, sort = "ASC" } = req.query;
     const limit = 10;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
-    const fieldsToRetrieve =
-      "firstName lastName username email role active";
+    const fieldsToRetrieve = "firstName lastName username email role active";
 
     try {
       const options = {
@@ -192,7 +196,7 @@ const updateUser = async (req, res) => {
     }
     const userId = req.params.id;
     const userUpdated = req.body;
-    if(userUpdated.password) {
+    if (userUpdated.password) {
       const salt = await bcrypt.genSalt(10);
       userUpdated.password = await bcrypt.hash(userUpdated.password, salt);
     }
@@ -282,37 +286,42 @@ const deleteUser = async (req, res) => {
 const checkAuth = async (req, res) => {
   try {
     if (!req.validateToken) {
-      return res.status(401).json({ message: 'Unauthorized from check-auth API request' });
+      return res
+        .status(401)
+        .json({ message: "Unauthorized from check-auth API request" });
     }
-    
+
     let authorized = await adminOrManager(req.validateToken);
-    
+
     if (!authorized) {
-      return res.status(401).json({ message: 'Unauthorized from check-auth API request' });
+      return res
+        .status(401)
+        .json({ message: "Unauthorized from check-auth API request" });
     }
 
-    return res.status(200).json({ user: req.validateToken});
-
+    return res.status(200).json({ user: req.validateToken });
   } catch (error) {
     console.log("Error while checking authorization: " + error);
-    return res.status(500).json({ error: 'An error occurred while checking authorization' });
+    return res
+      .status(500)
+      .json({ error: "An error occurred while checking authorization" });
   }
 };
 
 const logout = async (req, res) => {
   // Set token to none and expire after 5 seconds
-  res.cookie('token', 'none', {
-      expires: new Date(Date.now() + 5 * 1000),
-      httpOnly: true,
-  })
-  res.cookie('refreshToken', 'none', {
-      expires: new Date(Date.now() + 5 * 1000),
-      httpOnly: true,
-  })
-  res
-      .status(200)
-      .json({ success: true, message: 'User logged out successfully' })
-}
+  res.cookie("token", "none", {
+    expires: new Date(Date.now() + 5 * 1000),
+    httpOnly: true,
+  });
+  res.cookie("refreshToken", "none", {
+    expires: new Date(Date.now() + 5 * 1000),
+    httpOnly: true,
+  });
+  return res
+    .status(200)
+    .json({ success: true, message: "User logged out successfully" });
+};
 
 module.exports = {
   addUser,
@@ -323,5 +332,5 @@ module.exports = {
   updateUser,
   deleteUser,
   checkAuth,
-  logout
+  logout,
 };
