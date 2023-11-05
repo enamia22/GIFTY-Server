@@ -219,7 +219,7 @@ const getAllCustomers = async (req, res) => {
 //search for a Customer By query
 const findCustomerByQuery = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
+    let authorized = adminOrManager(req.validateToken);
     if (!authorized) {
       return res.status(403).json({ message: "Not authorized" });
     }
@@ -293,7 +293,14 @@ const updateCustomer = async (req, res) => {
       const existed = await Customer.findOne(query, options);
       if (existed) {
         const existingCustomer = await Customer.findOne({
-          $or: [{ email: customerUpdated.email }],
+          $and: [
+            {
+              $or: [
+                { email: customerUpdated.email },
+              ],
+            },
+            { _id: { $ne: customerId } }, // search in all users except the current one
+          ],
         });
         if (existingCustomer)
           return res.status(400).json({ error: "Customer already exits" });
