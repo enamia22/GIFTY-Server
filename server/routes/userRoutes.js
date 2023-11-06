@@ -5,6 +5,7 @@ const { isTokenExpired } = require("../controllers/refreshTokenController");
 
 const router = express.Router();
 router.post("/", isTokenExpired, userController.addUser);
+router.get('/user-count', isTokenExpired, userController.userCount);
 router.post("/login", userController.loginUser);
 router.get("/activities", isTokenExpired, activityController.getAllUsersActivities);
 router.get("/auth/check-auth", isTokenExpired, userController.checkAuth);
