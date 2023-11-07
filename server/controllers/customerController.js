@@ -109,6 +109,8 @@ const addCustomer = async (req, res) => {
       return res.status(400).json({ error: "Customer already exits" });
     const confirmationToken = crypto.randomBytes(20).toString("hex");
 
+    const currentDate = new Date();
+
     const salt = await bcrypt.genSalt(10);
     password = await bcrypt.hash(password, salt);
     const newCustomer = new Customer({
@@ -117,6 +119,7 @@ const addCustomer = async (req, res) => {
       email,
       password,
       active,
+      creationDate: currentDate, 
     });
 
     newCustomer.confirmationToken = confirmationToken;
@@ -194,19 +197,16 @@ const getAllCustomers = async (req, res) => {
     if (!authorized) {
       return res.status(403).json({ message: "Not authorized" });
     }
-    const { page = 1, sort = "ASC" } = req.query;
-    const limit = 10;
+    const { sort = "ASC" } = req.query;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
-
+    
     try {
       const options = {
-        page: page,
-        limit: limit,
         sort: sortOption,
-        select: "-password",
+        select: "-password -confirmationToken -role -__v",
       };
-
-      const result = await Customer.paginate({}, options);
+    
+      const result = await Customer.find({}, null, options);
       return res.json(result);
     } catch (error) {
       return res.status(500).json({ error: "Error retrieving data" });
@@ -389,8 +389,23 @@ const customerCount = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
     const customerCount = await Customer.countDocuments();
-
-    res.json({ count: customerCount });
+    const customerMonthsCount = await Customer.aggregate([
+      {
+        $project: {
+          month: { $month: '$creationDate' }, // Extract the month from the 'creationDate' field
+        },
+      },
+      {
+        $group: {
+          _id: '$month',
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { _id: 1 }, // Sort by month
+      },
+    ])
+    res.json({ count: customerCount, customerMonthsCount });
   } catch (error) {
     console.error('Error while getting customer count:', error);
     res.status(500).json({ error: 'Internal server error' });
