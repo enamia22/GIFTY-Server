@@ -1,6 +1,6 @@
 const Product = require("../models/Product");
 const SubCategory = require("../models/SubCategory");
-const { adminOrManager } = require("../middleware/authMiddleware");
+const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
 const { trackActivity } = require("../middleware/activityMiddleware");
 const mongoose = require("mongoose");
 var uniqid = require("uniqid");
@@ -404,7 +404,21 @@ const deleteProduct = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
+const productCount = async (req, res) => {
 
+  try {
+    let authorized = await adminOnly(req.validateToken);
+    if (!authorized) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+    const productCount = await Product.countDocuments();
+
+    res.json({ count: productCount });
+  } catch (error) {
+    console.error('Error while getting Product count:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 module.exports = {
   addProduct,
   getAllProducts,
@@ -412,4 +426,5 @@ module.exports = {
   findProductByQuery,
   updateProduct,
   deleteProduct,
+  productCount
 };

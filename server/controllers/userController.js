@@ -323,6 +323,22 @@ const logout = async (req, res) => {
     .json({ success: true, message: "User logged out successfully" });
 };
 
+const userCount = async (req, res) => {
+
+  try {
+    let authorized = await adminOnly(req.validateToken);
+    if (!authorized) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+    const userCount = await User.countDocuments();
+
+    res.json({ count: userCount });
+  } catch (error) {
+    console.error('Error while getting User count:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 module.exports = {
   addUser,
   loginUser,
@@ -333,4 +349,5 @@ module.exports = {
   deleteUser,
   checkAuth,
   logout,
+  userCount
 };
