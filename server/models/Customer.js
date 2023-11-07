@@ -45,7 +45,10 @@ const customerSchema = new mongoose.Schema({
   role : {
     type: String,
     default:'customer'
-  }
+  },
+  creationDate: {
+    type: Date,
+  },
 });
 
 customerSchema.plugin(mongoosePaginate);
