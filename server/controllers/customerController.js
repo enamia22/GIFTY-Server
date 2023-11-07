@@ -381,7 +381,21 @@ const validateProfile = async (req, res) => {
       .json({ message: "Invalid or expired confirmation link." });
   }
 };
+const customerCount = async (req, res) => {
 
+  try {
+    let authorized = await adminOnly(req.validateToken);
+    if (!authorized) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+    const customerCount = await Customer.countDocuments();
+
+    res.json({ count: customerCount });
+  } catch (error) {
+    console.error('Error while getting customer count:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 module.exports = {
   addCustomer,
   loginCustomer,
@@ -391,4 +405,5 @@ module.exports = {
   updateCustomer,
   deleteCustomer,
   validateProfile,
+  customerCount
 };

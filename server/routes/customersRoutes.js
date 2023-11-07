@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.post("/", customerController.addCustomer);
 router.post("/login", customerController.loginCustomer);
+router.get('/customer-count', isTokenExpired, customerController.customerCount);
 router.get("/", isTokenExpired, customerController.getAllCustomers);
 router.get("/search", isTokenExpired, customerController.findCustomerByQuery);
 router.get("/:id", isTokenExpired, customerController.findCustomerById);
