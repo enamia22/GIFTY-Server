@@ -203,7 +203,7 @@ const getAllCustomers = async (req, res) => {
         page: page,
         limit: limit,
         sort: sortOption,
-        select: "-password",
+        select: "-password -confirmationToken -role -__v",
       };
 
       const result = await Customer.paginate({}, options);
@@ -382,8 +382,23 @@ const customerCount = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
     const customerCount = await Customer.countDocuments();
-
-    res.json({ count: customerCount });
+    const customerMonthsCount = await Customer.aggregate([
+      {
+        $project: {
+          month: { $month: '$creationDate' }, // Extract the month from the 'creationDate' field
+        },
+      },
+      {
+        $group: {
+          _id: '$month',
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { _id: 1 }, // Sort by month
+      },
+    ])
+    res.json({ count: customerCount, customerMonthsCount });
   } catch (error) {
     console.error('Error while getting customer count:', error);
     res.status(500).json({ error: 'Internal server error' });
