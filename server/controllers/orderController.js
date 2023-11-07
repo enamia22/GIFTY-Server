@@ -50,18 +50,15 @@ const getAllOrders = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    const { page = 1, sort = "ASC" } = req.query;
-    const limit = 10;
+    const { sort = "ASC" } = req.query;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
 
     try {
       const options = {
-        page: page,
-        limit: limit,
         sort: sortOption,
       };
 
-      const result = await Order.paginate({}, options);
+      const result = await Order.find({}, null, options);
 
       async function getCustomerFullName(item) {
         const customer = await Customer.findById(item);
