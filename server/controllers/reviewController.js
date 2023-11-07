@@ -33,7 +33,8 @@ const submitProductReview = async (req, res) => {
 };
 
 const getAllReviews = async (req, res) => {
-  const { sort = "ASC" } = req.query;
+  const { page = 1, sort = "ASC" } = req.query;
+  const limit = 10;
   const sortOption = sort === "DESC" ? "-_id" : "_id";
 
   // Extract product ID from URL parameters
@@ -42,11 +43,13 @@ const getAllReviews = async (req, res) => {
 
   try {
     const options = {
+      page: page,
+      limit: limit,
       sort: sortOption,
     };
 
     // Modify the filter to include the product ID
-    const result = await Review.find({ productId: productId }, null, options);
+    const result = await Review.paginate({ productId: productId }, options);
     return res.json(result);
   } catch (error) {
     return res.status(500).json({ error: "Error retrieving data" });

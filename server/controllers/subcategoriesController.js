@@ -61,11 +61,14 @@ const getAllSubcategories = async (req, res) => {
       }
     }
 
-    const { sort = "ASC" } = req.query;
+    const { page = 1, sort = "ASC" } = req.query;
+    const limit = 10;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
 
     try {
       const options = {
+        page: page,
+        limit: limit,
         sort: sortOption,
       };
 
@@ -76,7 +79,7 @@ const getAllSubcategories = async (req, res) => {
         query.active = true;
       }
 
-      const result = await SubCategory.find(query, null, options);
+      const result = await SubCategory.paginate(query, options);
       return res.json(result);
     } catch (error) {
       return res.status(500).json({ error: "Error retrieving data" });

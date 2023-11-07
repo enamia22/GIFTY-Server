@@ -122,17 +122,20 @@ const getAllUsers = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    const { sort = "ASC" } = req.query;
+    const { page = 1, sort = "ASC" } = req.query;
+    const limit = 10;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
     const fieldsToRetrieve = "firstName lastName username email role active";
 
     try {
       const options = {
+        page: page,
+        limit: limit,
         sort: sortOption,
         select: fieldsToRetrieve,
       };
 
-      const result = await User.find({ role: { $ne: "admin" } }, null, options);
+      const result = await User.paginate({ role: { $ne: "admin" } }, options);
       return res.json(result);
     } catch (error) {
       return res.status(500).json({ error: "Error retrieving data" });
@@ -176,7 +179,7 @@ const findUserByQuery = async (req, res) => {
     const query = req.query.query;
 
     const results = await User.find({
-      username: { $regex: `^${query}`, $options: "i" },
+      username: { $regex: query, $options: "i" },
     });
     return res.json(results);
   } catch (error) {
@@ -319,6 +322,7 @@ const logout = async (req, res) => {
     .status(200)
     .json({ success: true, message: "User logged out successfully" });
 };
+
 const userCount = async (req, res) => {
 
   try {

@@ -106,7 +106,8 @@ const getAllProducts = async (req, res) => {
         authorized = true;
       }
     }
-    const { sort = "ASC" } = req.query;
+    const { page = 1, sort = "ASC" } = req.query;
+    const limit = 10;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
     // Define the fields you want to retrieve (projection)
     const fieldsToRetrieve =
@@ -114,6 +115,8 @@ const getAllProducts = async (req, res) => {
 
     try {
       const options = {
+        page: page,
+        limit: limit,
         sort: sortOption,
         select: fieldsToRetrieve,
       };
@@ -125,7 +128,7 @@ const getAllProducts = async (req, res) => {
         query.active = true;
       }
 
-      const result = await Product.find(query, null, options);
+      const result = await Product.paginate(query, options);
 
       async function getSubCatName(item) {
         try {

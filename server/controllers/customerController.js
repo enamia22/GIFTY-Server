@@ -199,16 +199,19 @@ const getAllCustomers = async (req, res) => {
     if (!authorized) {
       return res.status(403).json({ message: "Not authorized" });
     }
-    const { sort = "ASC" } = req.query;
+    const { page = 1, sort = "ASC" } = req.query;
+    const limit = 10;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
     
     try {
       const options = {
+        page: page,
+        limit: limit,
         sort: sortOption,
         select: "-password -confirmationToken -role -__v",
       };
     
-      const result = await Customer.find({}, null, options);
+      const result = await Customer.paginate({}, options);
       return res.json(result);
     } catch (error) {
       return res.status(500).json({ error: "Error retrieving data" });
