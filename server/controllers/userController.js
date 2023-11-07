@@ -122,20 +122,17 @@ const getAllUsers = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    const { page = 1, sort = "ASC" } = req.query;
-    const limit = 10;
+    const { sort = "ASC" } = req.query;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
     const fieldsToRetrieve = "firstName lastName username email role active";
 
     try {
       const options = {
-        page: page,
-        limit: limit,
         sort: sortOption,
         select: fieldsToRetrieve,
       };
 
-      const result = await User.paginate({ role: { $ne: "admin" } }, options);
+      const result = await User.find({ role: { $ne: "admin" } }, null, options);
       return res.json(result);
     } catch (error) {
       return res.status(500).json({ error: "Error retrieving data" });
