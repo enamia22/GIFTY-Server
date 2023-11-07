@@ -2,8 +2,7 @@ const Order = require("../models/Order");
 const Customer = require("../models/Customer");
 const Product = require("../models/Product");
 const mongoose = require("mongoose");
-const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
-const Revenue = require("../models/Revenue");
+const { adminOrManager } = require("../middleware/authMiddleware");
 
 const addOrder = async (req, res) => {
   try {
@@ -50,15 +49,18 @@ const getAllOrders = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    const { sort = "ASC" } = req.query;
+    const { page = 1, sort = "ASC" } = req.query;
+    const limit = 10;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
 
     try {
       const options = {
+        page: page,
+        limit: limit,
         sort: sortOption,
       };
 
-      const result = await Order.find({}, null, options);
+      const result = await Order.paginate({}, options);
 
       async function getCustomerFullName(item) {
         const customer = await Customer.findById(item);
@@ -186,13 +188,6 @@ const updateOrder = async (req, res) => {
         order.lastUpdate = new Date();
 
         await order.save();
-        if (status === 'Closed') {
-          const revenue = await Revenue.findOne(); // Get the current revenue document
-      
-          revenue.total += order.cart_total_price; // Update the total revenue
-      
-          await revenue.save(); // Save the updated total revenue
-        }
 
         return res.json({
           message: "Order status updated successfully",
@@ -209,41 +204,10 @@ const updateOrder = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
-const orderCount = async (req, res) => {
 
-  try {
-    let authorized = await adminOnly(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
-    const orderCount = await Order.countDocuments();
-
-    res.json({ count: orderCount });
-  } catch (error) {
-    console.error('Error while getting order count:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-const totalRevenueCount = async (req, res) => {
-
-  try {
-    let authorized = await adminOnly(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
-    const revenue = await Revenue.findOne();
-
-    res.json({ revenue: revenue.total });
-  } catch (error) {
-    console.error('Error while getting total revenue:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
 module.exports = {
   addOrder,
   getAllOrders,
   getOrderById,
   updateOrder,
-  orderCount,
-  totalRevenueCount
 };

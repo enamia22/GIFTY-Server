@@ -1,6 +1,6 @@
 const Product = require("../models/Product");
 const SubCategory = require("../models/SubCategory");
-const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
+const { adminOrManager } = require("../middleware/authMiddleware");
 const { trackActivity } = require("../middleware/activityMiddleware");
 const mongoose = require("mongoose");
 var uniqid = require("uniqid");
@@ -106,7 +106,8 @@ const getAllProducts = async (req, res) => {
         authorized = true;
       }
     }
-    const { sort = "ASC" } = req.query;
+    const { page = 1, sort = "ASC" } = req.query;
+    const limit = 10;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
     // Define the fields you want to retrieve (projection)
     const fieldsToRetrieve =
@@ -114,6 +115,8 @@ const getAllProducts = async (req, res) => {
 
     try {
       const options = {
+        page: page,
+        limit: limit,
         sort: sortOption,
         select: fieldsToRetrieve,
       };
@@ -125,7 +128,7 @@ const getAllProducts = async (req, res) => {
         query.active = true;
       }
 
-      const result = await Product.find(query, null, options);
+      const result = await Product.paginate(query, options);
 
       async function getSubCatName(item) {
         try {
@@ -401,21 +404,7 @@ const deleteProduct = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
-const productCount = async (req, res) => {
 
-  try {
-    let authorized = await adminOnly(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
-    const productCount = await Product.countDocuments();
-
-    res.json({ count: productCount });
-  } catch (error) {
-    console.error('Error while getting Product count:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
 module.exports = {
   addProduct,
   getAllProducts,
@@ -423,5 +412,4 @@ module.exports = {
   findProductByQuery,
   updateProduct,
   deleteProduct,
-  productCount
 };
