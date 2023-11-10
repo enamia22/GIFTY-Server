@@ -200,7 +200,7 @@ const getAllCustomers = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
     const { page = 1, sort = "ASC" } = req.query;
-    const limit = 10;
+    const limit = 4;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
     
     try {
@@ -233,7 +233,7 @@ const findCustomerByQuery = async (req, res) => {
 
     const results = await Customer.find(
       {
-        firstName: { $regex: query, $options: "i" },
+        firstName: { $regex: `^${query}`, $options: "i" },
       },
       "-password"
     );
