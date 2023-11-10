@@ -60,7 +60,7 @@ const getAllCategories = async (req, res) => {
     }
 
     const { page = 1, sort = "ASC" } = req.query;
-    const limit = 10;
+    const limit = 4;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
 
     try {

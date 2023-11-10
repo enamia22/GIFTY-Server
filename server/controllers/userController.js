@@ -123,7 +123,7 @@ const getAllUsers = async (req, res) => {
     }
 
     const { page = 1, sort = "ASC" } = req.query;
-    const limit = 10;
+    const limit = 4;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
     const fieldsToRetrieve = "firstName lastName username email role active";
 
@@ -179,7 +179,7 @@ const findUserByQuery = async (req, res) => {
     const query = req.query.query;
 
     const results = await User.find({
-      username: { $regex: query, $options: "i" },
+      username: { $regex: `^${query}`, $options: "i" },
     });
     return res.json(results);
   } catch (error) {
