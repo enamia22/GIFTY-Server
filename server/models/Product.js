@@ -14,7 +14,7 @@ const productSchema = new mongoose.Schema({
   },
   productImage: {
     type: String,
-    required: true,
+    required: false,
     default: "uploads/placeholder.jpg"
   },
   shortDescription: {

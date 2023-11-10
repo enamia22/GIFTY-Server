@@ -30,7 +30,8 @@ const addProduct = async (req, res) => {
       price,
       discountPrice,
       options,
-      pack,
+      active,
+      pack
     } = req.body;
 
     // Validation: Check if required fields are missing
@@ -59,18 +60,18 @@ const addProduct = async (req, res) => {
     }
 
     const currentDate = new Date();
-
     const newProduct = new Product({
       sku: uniqid(),
       productName: createProduct.productName,
       productImage: imageProduct,
       shortDescription: createProduct.shortDescription,
       longDescription: createProduct.shortDescription,
-      subcategoryId: createProduct.subcategoryId,
+      subcategoryId: new mongoose.Types.ObjectId(createProduct.subcategoryId),
       price: createProduct.price,
       discountPrice: createProduct.discountPrice,
       options: createProduct.options,
       pack: createProduct.pack,
+      active: createProduct.active,
       creationDate: currentDate,
     });
 
@@ -110,15 +111,14 @@ const getAllProducts = async (req, res) => {
     const limit = 10;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
     // Define the fields you want to retrieve (projection)
-    const fieldsToRetrieve =
-      "subcategoryId sku productName productImage shortDescription";
+    // const fieldsToRetrieve =
+      // "subcategoryId sku productName productImage shortDescription";
 
     try {
       const options = {
         page: page,
         limit: limit,
         sort: sortOption,
-        select: fieldsToRetrieve,
       };
 
       let query = {};
