@@ -109,16 +109,11 @@ const getAllProducts = async (req, res) => {
     const { page = 1, sort = "ASC" } = req.query;
     const limit = 10;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
-    // Define the fields you want to retrieve (projection)
-    const fieldsToRetrieve =
-      "subcategoryId sku productName productImage shortDescription";
-
     try {
       const options = {
         page: page,
         limit: limit,
         sort: sortOption,
-        select: fieldsToRetrieve,
       };
 
       let query = {};
@@ -154,7 +149,6 @@ const getAllProducts = async (req, res) => {
         const promises = array.map(async (item) => ({
           ...item._doc,
           subcategoryName: await getSubCatName(item.subcategoryId),
-          hello: "hello",
         }));
 
         return Promise.all(promises);
@@ -228,7 +222,7 @@ const findProductById = async (req, res) => {
 
 const findProductByQuery = async (req, res) => {
   try {
-    let authorized = false;
+    let authorized = true;
 
     if (req.validateToken) {
       const checkIfAuthorized = await adminOrManager(req.validateToken);
@@ -242,29 +236,22 @@ const findProductByQuery = async (req, res) => {
     const limit = 10;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
 
-    // Define the fields you want to retrieve (projection)
-    const fieldsToRetrieve =
-      "subcategoryId sku productName productImage shortDescription";
-
     const options = {
       page: page,
       limit: limit,
       sort: sortOption,
-      select: fieldsToRetrieve,
     };
 
-    // Define the query to filter products based on the productName using regex
-    const queryRegex = { productName: { $regex: query, $options: "i" } };
+    let result = await Product.paginate({ productName: { $regex: query, $options: 'i' } }, options);
 
-    if (!authorized) {
-      // For not authorized users, filter by status true
-      queryRegex.active = true;
+    if (!authorized) { 
+      result = result.docs.filter((element) => element.active);
+    console.log(result);  
     }
 
-    // Use Product.paginate to retrieve paginated data with projection
-    const result = await Product.paginate(queryRegex, options);
-
-    // const results = await Product.find({ productName: { $regex: query, $options: 'i' } });
+    if (result.length <= 0) {
+      return res.status(204).json({ message: "No product found"});
+    }
 
     async function getSubCatName(item) {
       const subcategory = await SubCategory.findById(item);
