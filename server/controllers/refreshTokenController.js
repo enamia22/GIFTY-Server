@@ -18,6 +18,7 @@ const generateAccessToken = (userId, email, username, role) => {
 
 //verifyAccessTokenValidation
 const verifyAccessToken = (accessToken) => {
+
   const options = {
     ignoreExpiration: true,
   };
@@ -25,7 +26,7 @@ const verifyAccessToken = (accessToken) => {
     const decoded = jwt.verify(accessToken, secretKey, options);
     return decoded;
   } catch (err) {
-    return null;
+    return console.log(err);
   }
 };
 
@@ -61,6 +62,7 @@ const refreshAccessToken = async (refreshToken) => {
 
 // Function to verify if the access token has expired
 const isAccessTokenExpired = (accessToken) => {
+
   try {
     const decoded = verifyAccessToken(accessToken);
     const currentTime = Date.now() / 1000; // Convert to seconds
@@ -70,7 +72,7 @@ const isAccessTokenExpired = (accessToken) => {
       return { ...decoded, expired: false };
     }
   } catch (error) {
-    return true;
+    return error;
   }
 };
 
@@ -152,6 +154,7 @@ const isTokenExpired = async (req, res, next) => {
   const refreshToken = req.cookies.refreshToken;
   const decodedWithValue = isAccessTokenExpired(token);
   req.validateToken = decodedWithValue;
+  console.log(decodedWithValue);
 
   // Check if access token is expired
   if (decodedWithValue.expired) {
