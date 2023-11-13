@@ -225,7 +225,7 @@ const updateSubcategory = async (req, res) => {
 
 const deleteSubcategory = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
+    let authorized = await adminOnly(req.validateToken);
     if (!authorized) {
       return res.status(403).json({ message: "Not authorized" });
     }

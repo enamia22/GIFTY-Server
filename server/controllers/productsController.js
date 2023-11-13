@@ -124,7 +124,6 @@ const getAllProducts = async (req, res) => {
       }
 
       const result = await Product.paginate(query, options);
-      // console.log(result);
       async function getSubCatName(item) {
         try {
           const check = mongoose.Types.ObjectId.isValid(item);
@@ -157,7 +156,6 @@ const getAllProducts = async (req, res) => {
       updateArray(result)
         .then((updatedArray) => {
            result.docs = updatedArray
-           console.log(result);
           return res.status(201).json(result);
         })
         .catch((error) => {
@@ -360,7 +358,7 @@ const updateProduct = async (req, res) => {
 
 const deleteProduct = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
+    let authorized = await adminOnly(req.validateToken);
     if (!authorized) {
       return res.status(403).json({ message: "Not authorized" });
     }

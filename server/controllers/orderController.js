@@ -51,7 +51,7 @@ const getAllOrders = async (req, res) => {
     }
 
     const { page = 1, sort = "ASC" } = req.query;
-    const limit = 10;
+    const limit = 4;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
 
     try {
@@ -87,7 +87,8 @@ const getAllOrders = async (req, res) => {
 
       updatedOrdersArray(result.docs)
         .then((updatedArray) => {
-          return res.status(201).json(updatedArray);
+          result.docs = updatedArray;
+          return res.status(201).json(result);
         })
         .catch((error) => {
           console.error(error);
