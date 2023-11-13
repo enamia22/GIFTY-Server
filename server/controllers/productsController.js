@@ -107,7 +107,7 @@ const getAllProducts = async (req, res) => {
       }
     }
     const { page = 1, sort = "ASC" } = req.query;
-    const limit = 10;
+    const limit = 4;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
     try {
       const options = {
@@ -124,7 +124,6 @@ const getAllProducts = async (req, res) => {
       }
 
       const result = await Product.paginate(query, options);
-
       async function getSubCatName(item) {
         try {
           const check = mongoose.Types.ObjectId.isValid(item);
@@ -146,7 +145,7 @@ const getAllProducts = async (req, res) => {
       }
 
       async function updateArray(array) {
-        const promises = array.map(async (item) => ({
+        const promises = array.docs.map(async (item) => ({
           ...item._doc,
           subcategoryName: await getSubCatName(item.subcategoryId),
         }));
@@ -154,9 +153,10 @@ const getAllProducts = async (req, res) => {
         return Promise.all(promises);
       }
 
-      updateArray(result.docs)
+      updateArray(result)
         .then((updatedArray) => {
-          return res.status(201).json(updatedArray);
+           result.docs = updatedArray
+          return res.status(201).json(result);
         })
         .catch((error) => {
           console.error(error);
@@ -222,7 +222,7 @@ const findProductById = async (req, res) => {
 
 const findProductByQuery = async (req, res) => {
   try {
-    let authorized = true;
+    let authorized = false;
 
     if (req.validateToken) {
       const checkIfAuthorized = await adminOrManager(req.validateToken);
@@ -233,7 +233,7 @@ const findProductByQuery = async (req, res) => {
 
     const query = req.query.query;
     const { page = 1, sort = "ASC" } = req.query;
-    const limit = 10;
+    const limit = 4;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
 
     const options = {
@@ -246,7 +246,6 @@ const findProductByQuery = async (req, res) => {
 
     if (!authorized) { 
       result = result.docs.filter((element) => element.active);
-    console.log(result);  
     }
 
     if (result.length <= 0) {
@@ -359,7 +358,7 @@ const updateProduct = async (req, res) => {
 
 const deleteProduct = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
+    let authorized = await adminOnly(req.validateToken);
     if (!authorized) {
       return res.status(403).json({ message: "Not authorized" });
     }

@@ -19,6 +19,20 @@ const PORT = process.env.PORT;
 // connect to database
 mongoDBConnection();
 
+// Error-handling middleware
+app.use((err, req, res, next) => {
+  // Handle unauthorized errors
+  if (err.message === 'Refresh token has expired') {
+    return res.status(401).json({ error: 'Refresh token expired' });
+  }
+  if (err.message === 'Invalid refresh token') {
+    return res.status(401).json({ error: 'Invalid refresh token' });
+  }
+
+  // Handle other errors or pass them to the default error handler
+  next(err);
+});
+
 //import routers
 const userRouter = require("./routes/userRoutes");
 const categoryRouter = require("./routes/categoryRoutes");

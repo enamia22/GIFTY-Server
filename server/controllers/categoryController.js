@@ -220,7 +220,7 @@ const updateCategory = async (req, res) => {
 
 const deleteCategory = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
+    let authorized = await adminOnly(req.validateToken);
     if (!authorized) {
       return res.status(403).json({ message: "Not authorized" });
     }
