@@ -18,7 +18,6 @@ const generateAccessToken = (userId, email, username, role) => {
 
 //verifyAccessTokenValidation
 const verifyAccessToken = (accessToken) => {
-
   const options = {
     ignoreExpiration: true,
   };
@@ -43,17 +42,17 @@ const refreshAccessToken = async (refreshToken) => {
   });
 
   if (!refreshTokenDocument) {
-    throw new Error("Invalid refresh token.");
+    throw new Error("Invalid refresh token");
   }
 
   // Check if the refresh token has been revoked
   if (refreshTokenDocument.revokedBy) {
-    throw new Error("Refresh token has been revoked.");
+    throw new Error("Refresh token has been revoked");
   }
 
   // Check if the refresh token has expired
   if (refreshTokenDocument.expires < new Date()) {
-    throw new Error("Refresh token has expired.");
+    throw new Error("Refresh token has expired");
   }
   const { userId, role, email, username } = refreshTokenDocument;
   // If the refresh token is valid, generate a new access token
@@ -72,7 +71,7 @@ const isAccessTokenExpired = (accessToken) => {
       return { ...decoded, expired: false };
     }
   } catch (error) {
-    return error;
+    return false;
   }
 };
 
@@ -152,12 +151,16 @@ const updateRefreshToken = async (
 const isTokenExpired = async (req, res, next) => {
   const token = req.cookies.token;
   const refreshToken = req.cookies.refreshToken;
+
   const decodedWithValue = isAccessTokenExpired(token);
   req.validateToken = decodedWithValue;
-  console.log(decodedWithValue);
 
+  if(!decodedWithValue) {
+    return res.status(404).json({ message: 'Access token not valid' });
+  }
   // Check if access token is expired
   if (decodedWithValue.expired) {
+
     try {
       // Use the refresh token to get a new access token
       const newAccessToken = await refreshAccessToken(refreshToken);
@@ -170,10 +173,8 @@ const isTokenExpired = async (req, res, next) => {
       return next();
     } catch (error) {
       // Handle errors (e.g., invalid refresh token, expired refresh token)
-      console.error("Token refresh failed:", error.message);
+      throw new Error('Refresh token has expired');
 
-      // Respond to the request immediately (e.g., with a 401 status)
-      return res.status(401).json({ message: "Unauthorized" });
     }
   }
 
