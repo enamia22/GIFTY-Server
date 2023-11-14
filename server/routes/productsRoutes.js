@@ -18,6 +18,7 @@ const upload = multer({ storage: storage });
 const router = express.Router();
 router.post("/", isTokenExpired, upload.single('productImage'), productsController.addProduct);
 router.get("/", isTokenExpired, productsController.getAllProducts);
+router.get('/product-images/:imageName', isTokenExpired, productsController.getProductImage);
 router.get('/product-count', isTokenExpired, productsController.productCount);
 router.get("/search", isTokenExpired, productsController.findProductByQuery);
 router.get("/:id", isTokenExpired, productsController.findProductById);

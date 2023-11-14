@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 var uniqid = require("uniqid");
 const { validationResult } = require("express-validator");
 const { sanitizeRequestBody } = require("../middleware/dataValidation");
+const path = require('path');
 
 //Add Subcategory
 const addProduct = async (req, res) => {
@@ -19,7 +20,7 @@ const addProduct = async (req, res) => {
     let imageProduct;
 
     if (req.file) {
-      imageProduct = req.file.path;
+      imageProduct = req.file.filename;
     }
 
     let {
@@ -93,6 +94,16 @@ const addProduct = async (req, res) => {
     console.log("Error while adding new Product: " + error);
     return res.status(500).json({ error: error.message });
   }
+};
+
+
+// Function to serve product images
+const getProductImage = (req, res) => {
+  // Assuming product images are stored in the 'uploads/product-images' folder
+  const imagePath = path.join(__dirname, '../uploads/', req.params.imageName);
+console.log(imagePath);
+  // Send the image file
+  res.sendFile(imagePath);
 };
 
 //get all Products
@@ -412,5 +423,6 @@ module.exports = {
   findProductByQuery,
   updateProduct,
   deleteProduct,
-  productCount
+  productCount,
+  getProductImage
 };
