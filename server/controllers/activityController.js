@@ -21,7 +21,7 @@ const getAllUsersActivities = async (req, res) => {
       const result = await Activity.paginate({}, options);
       return res.json(result);
     } catch (error) {
-      return res.status(500).json({ error: "Error retrieving data" });
+      return res.status(500).json({ error: "Error retrieving data from activities" });
     }
   } catch (error) {
     console.log("Error retrieving data: " + error);

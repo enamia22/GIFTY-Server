@@ -216,7 +216,7 @@ const getAllCustomers = async (req, res) => {
       const result = await Customer.paginate({}, options);
       return res.json(result);
     } catch (error) {
-      return res.status(500).json({ error: "Error retrieving data" });
+      return res.status(500).json({ error: "Error retrieving data from customer" });
     }
   } catch (error) {
     return res.status(500).json({ error: error.message });

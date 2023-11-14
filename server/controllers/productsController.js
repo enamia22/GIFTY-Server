@@ -172,10 +172,10 @@ const getAllProducts = async (req, res) => {
           console.error(error);
         });
     } catch (error) {
-      return res.status(500).json({ error: "Error retrieving data" });
+      return res.status(500).json({ error: "Error retrieving data from product" });
     }
   } catch (error) {
-    console.log("Error retrieving data: " + error);
+    console.log("Error retrieving data from product: " + error);
     return res.status(500).json({ error: error.message });
   }
 };

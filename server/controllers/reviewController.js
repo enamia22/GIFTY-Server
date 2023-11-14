@@ -52,7 +52,7 @@ const getAllReviews = async (req, res) => {
     const result = await Review.paginate({ productId: productId }, options);
     return res.json(result);
   } catch (error) {
-    return res.status(500).json({ error: "Error retrieving data" });
+    return res.status(500).json({ error: "Error retrieving data from review" });
   }
 };
 

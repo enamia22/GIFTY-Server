@@ -94,10 +94,10 @@ const getAllOrders = async (req, res) => {
           console.error(error);
         });
     } catch (error) {
-      return res.status(500).json({ error: "Error retrieving data" });
+      return res.status(500).json({ error: "Error retrieving data  from order" });
     }
   } catch (error) {
-    console.log("Error retrieving data: " + error);
+    console.log("Error retrieving data from order: " + error);
   }
 };
 
@@ -167,7 +167,7 @@ const getOrderById = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
   } catch (error) {
-    console.log("Error retrieving data: " + error);
+    console.log("Error retrieving data  from order: " + error);
   }
 };
 

@@ -138,7 +138,7 @@ const getAllUsers = async (req, res) => {
       const result = await User.paginate({ role: { $ne: "admin" } }, options);
       return res.json(result);
     } catch (error) {
-      return res.status(500).json({ error: "Error retrieving data" });
+      return res.status(500).json({ error: "Error retrieving data from product" });
     }
   } catch (error) {
     console.log("Error retrieving data: " + error);

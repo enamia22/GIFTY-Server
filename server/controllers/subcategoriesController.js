@@ -82,7 +82,7 @@ const getAllSubcategories = async (req, res) => {
       const result = await SubCategory.paginate(query, options);
       return res.json(result);
     } catch (error) {
-      return res.status(500).json({ error: "Error retrieving data" });
+      return res.status(500).json({ error: "Error retrieving data from subcategory" });
     }
   } catch (error) {
     console.log("Error retrieving data: " + error);

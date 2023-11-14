@@ -79,10 +79,10 @@ const getAllCategories = async (req, res) => {
       const result = await Category.paginate(query, options);
       return res.json(result);
     } catch (error) {
-      return res.status(500).json({ error: "Error retrieving data" });
+      return res.status(500).json({ error: "Error retrieving data from category" });
     }
   } catch (error) {
-    console.log("Error retrieving data: " + error);
+    console.log("Error retrieving data from category: " + error);
   }
 };
 
