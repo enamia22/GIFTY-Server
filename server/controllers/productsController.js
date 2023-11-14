@@ -101,7 +101,6 @@ const addProduct = async (req, res) => {
 const getProductImage = (req, res) => {
   // Assuming product images are stored in the 'uploads/product-images' folder
   const imagePath = path.join(__dirname, '../uploads/', req.params.imageName);
-console.log(imagePath);
   // Send the image file
   res.sendFile(imagePath);
 };

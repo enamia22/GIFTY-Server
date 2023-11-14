@@ -8,6 +8,8 @@ const {
   createRefreshToken,
   generateAccessToken,
 } = require("../controllers/refreshTokenController");
+const Product = require("../models/Product");
+const Order = require("../models/Order");
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -410,7 +412,39 @@ const customerCount = async (req, res) => {
         $sort: { _id: 1 }, // Sort by month
       },
     ])
-    res.json({ count: customerCount, customerMonthsCount });
+    const productMonthsCount = await Product.aggregate([
+      {
+        $project: {
+          month: { $month: '$creationDate' }, // Extract the month from the 'creationDate' field
+        },
+      },
+      {
+        $group: {
+          _id: '$month',
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { _id: 1 }, // Sort by month
+      },
+    ])
+    const orderMonthsCount = await Order.aggregate([
+      {
+        $project: {
+          month: { $month: '$orderDate' }, // Extract the month from the 'creationDate' field
+        },
+      },
+      {
+        $group: {
+          _id: '$month',
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { _id: 1 }, // Sort by month
+      },
+    ])
+    res.json({ count: customerCount, customerMonthsCount, productMonthsCount, orderMonthsCount, orderMonthsCount });
   } catch (error) {
     console.error('Error while getting customer count:', error);
     res.status(500).json({ error: 'Internal server error' });
