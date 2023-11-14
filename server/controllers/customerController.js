@@ -99,8 +99,8 @@ async function main(to, username, confirmationLink) {
 //Add Customer
 const addCustomer = async (req, res) => {
   try {
-    let { firstName, lastName, email, password, active } = req.body;
-    if (!firstName || !lastName || !email || !password) {
+    let { firstName, lastName, email, password, active ,address, phone } = req.body;
+    if (!firstName || !lastName || !email || !password || !address || !phone) {
       return res.status(200).send({ message: "missing field" });
     }
 
@@ -117,7 +117,9 @@ const addCustomer = async (req, res) => {
       firstName,
       lastName,
       email,
+      address,
       password,
+      phone,
       active,
       creationDate: currentDate, 
     });
