@@ -224,7 +224,7 @@ const updateUser = async (req, res) => {
 
         const user = await User.findByIdAndUpdate(userId, userUpdated, {
           new: true,
-        });
+        }).select("-password");;
 
         const addActivity = await trackActivity(
           req.validateToken.userId,
@@ -236,7 +236,7 @@ const updateUser = async (req, res) => {
           console.log("activity not added: ");
         }
 
-        return res.json({ "user updated successfully": user });
+        return res.json({ user });
       } else {
         return res.send("not found");
       }
