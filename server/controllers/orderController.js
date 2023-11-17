@@ -101,6 +101,69 @@ const getAllOrders = async (req, res) => {
   }
 };
 
+
+const getCustomerOrders = async (req, res) => {
+    
+  try {
+    if (!req.validateToken) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const customerId = new mongoose.Types.ObjectId(req.validateToken.userId);
+
+
+    const { page = 1, sort = "ASC" } = req.query;
+    const limit = 4;
+    const sortOption = sort === "DESC" ? "-_id" : "_id";
+
+    try {
+      const options = {
+        page: page,
+        limit: limit,
+        sort: sortOption,
+      };
+
+      const result = await Order.paginate({ customer_id: customerId }, options);
+
+      async function getCustomerFullName(item) {
+        const customer = await Customer.findById(item);
+        const fullName = customer.firstName + " " + customer.lastName;
+        return fullName;
+      }
+
+      async function updatedOrdersArray(array) {
+        const promises = array.map(async (item) => {
+          const numberOfItems = item.order_items.length;
+
+          const updatedItem = {
+            ...item._doc,
+            customerFullName: await getCustomerFullName(item._doc.customer_id),
+            numberOfItems: numberOfItems,
+          };
+
+          return updatedItem;
+        });
+
+        return Promise.all(promises);
+      }
+
+      updatedOrdersArray(result.docs)
+        .then((updatedArray) => {
+          result.docs = updatedArray;
+          return res.status(201).json(result);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    } catch (error) {
+      return res.status(500).json({ error: "Error retrieving data  from order" });
+    }
+  } catch (error) {
+    console.log("Error retrieving data from order: " + error);
+  }
+};
+
+
 const getOrderById = async (req, res) => {
   try {
     let authorized = await adminOrManager(req.validateToken);
@@ -249,5 +312,6 @@ module.exports = {
   getOrderById,
   updateOrder,
   orderCount,
-  totalRevenueCount
+  totalRevenueCount,
+  getCustomerOrders,
 };
