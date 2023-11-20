@@ -156,7 +156,9 @@ const isTokenExpired = async (req, res, next) => {
   req.validateToken = decodedWithValue;
 
   if(!decodedWithValue) {
-    return res.status(404).json({ message: 'Access token not valid' });
+    req.validateToken = false;
+    return next();
+    // return res.status(404).json({ message: 'Access token not valid' });
   }
   // Check if access token is expired
   if (decodedWithValue.expired) {
