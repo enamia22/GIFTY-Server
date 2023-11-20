@@ -2,6 +2,7 @@ const SubCategory = require("../models/SubCategory");
 const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
 const { trackActivity } = require("../middleware/activityMiddleware");
+const Category = require("../models/Category");
 
 //Add Subcategory
 const addSubcategory = async (req, res) => {
@@ -80,7 +81,36 @@ const getAllSubcategories = async (req, res) => {
       }
 
       const result = await SubCategory.paginate(query, options);
-      return res.json(result);
+
+
+      async function getCategoryName(id) {
+        const category = await Category.findById(id);
+        const categoryName = category.categoryName;
+        return categoryName;
+      }
+
+      async function updatedSubCategoryArray(array) {
+        const promises = array.map(async (item) => {
+
+          const updatedItem = {
+            ...item._doc,
+            categoryName: await getCategoryName(item._doc.categoryId),
+          };
+
+          return updatedItem;
+        });
+
+        return Promise.all(promises);
+      }
+
+      updatedSubCategoryArray(result.docs)
+        .then((updatedArray) => {
+          result.docs = updatedArray;
+          return res.status(201).json(result);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
     } catch (error) {
       return res.status(500).json({ error: "Error retrieving data from subcategory" });
     }
