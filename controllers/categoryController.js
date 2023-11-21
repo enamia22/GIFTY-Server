@@ -2,6 +2,7 @@ const Category = require("../models/Category");
 const mongoose = require("mongoose");
 const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
 const { trackActivity } = require("../middleware/activityMiddleware");
+const SubCategory = require("../models/SubCategory");
 
 const addCategory = async (req, res) => {
   try {
@@ -78,6 +79,36 @@ const getAllCategories = async (req, res) => {
 
       const result = await Category.paginate(query, options);
       return res.json(result);
+    } catch (error) {
+      return res.status(500).json({ error: "Error retrieving data from category" });
+    }
+  } catch (error) {
+    console.log("Error retrieving data from category: " + error);
+  }
+};
+
+const getDataDropDown = async (req, res) => {
+  try {
+    let authorized = false;
+
+    if (req.validateToken) {
+      const checkIfAuthorized = await adminOrManager(req.validateToken);
+      if (checkIfAuthorized) {
+        authorized = true;
+      }
+    }
+    try {
+      let query = {};
+
+      if (!authorized) {
+        // For not authorized users, filter by status true
+        query.active = true;
+      }
+
+      const result = await Category.find(query);
+      const result2 = await SubCategory.find(query);
+
+      return res.json({result, result2});
     } catch (error) {
       return res.status(500).json({ error: "Error retrieving data from category" });
     }
@@ -260,4 +291,5 @@ module.exports = {
   findCategoryById,
   updateCategory,
   deleteCategory,
+  getDataDropDown
 };

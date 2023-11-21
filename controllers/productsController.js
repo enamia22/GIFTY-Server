@@ -242,20 +242,10 @@ const findProductByQuery = async (req, res) => {
     }
 
     const query = req.query.query;
-    const { page = 1, sort = "ASC" } = req.query;
-    const limit = 4;
-    const sortOption = sort === "DESC" ? "-_id" : "_id";
-
-    const options = {
-      page: page,
-      limit: limit,
-      sort: sortOption,
-    };
-
-    let result = await Product.paginate({ productName: { $regex: query, $options: 'i' } }, options);
+    let result = await Product.find({ productName: { $regex: `^${query}`, $options: 'i' } });
 
     if (!authorized) { 
-      result = result.docs.filter((element) => element.active);
+      result = result.filter((element) => element.active);
     }
 
     if (result.length <= 0) {
@@ -276,7 +266,7 @@ const findProductByQuery = async (req, res) => {
       return Promise.all(promises);
     }
 
-    updateArray(result.docs)
+    updateArray(result)
       .then((updatedArray) => {
         return res.status(201).json(updatedArray);
       })
