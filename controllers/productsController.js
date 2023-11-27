@@ -117,7 +117,7 @@ const getAllProducts = async (req, res) => {
       }
     }
     const { page = 1, sort = "ASC" } = req.query;
-    const limit = 4;
+    const limit = 30;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
     try {
       const options = {
