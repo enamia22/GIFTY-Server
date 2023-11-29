@@ -102,7 +102,7 @@ async function main(to, username, confirmationLink) {
 const addCustomer = async (req, res) => {
   try {
     let { firstName, lastName, email, password, active ,address, phone } = req.body;
-    if (!firstName || !lastName || !email || !password || !address || !phone) {
+    if (!firstName || !lastName || !email || !password ) {
       return res.status(200).send({ message: "missing field" });
     }
 
@@ -183,8 +183,8 @@ const loginCustomer = async (req, res) => {
         user.role,
         "MustaphaIpAddress"
       );
-      res.cookie("token", token);
-      res.cookie("refreshToken", refreshToken.value);
+      res.cookie("token", token, { httpOnly: true });
+      res.cookie("refreshToken", refreshToken.value, { httpOnly: true });
       return res
         .status(200)
         .json({ token: token, refreshToken: refreshToken.value, status: 200 });
