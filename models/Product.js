@@ -1,21 +1,21 @@
 const mongoose = require("mongoose");
-const mongoosePaginate = require('mongoose-paginate-v2');
-const categoryModel = require('./Category.js');
+const mongoosePaginate = require("mongoose-paginate-v2");
+const categoryModel = require("./Category.js");
 
 const productSchema = new mongoose.Schema({
   sku: {
     type: String,
-    unique: true
+    unique: true,
   },
   productName: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
   },
   productImage: {
     type: String,
     required: true,
-    default: "uploads/placeholder.jpg"
+    default: "uploads/placeholder.jpg",
   },
   shortDescription: {
     type: String,
@@ -26,37 +26,38 @@ const productSchema = new mongoose.Schema({
     required: true,
   },
   categoryId: {
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: categoryModel
+    type: mongoose.Schema.Types.ObjectId,
+    ref: categoryModel,
   },
   active: {
     type: Boolean,
-    default: false
+    default: false,
   },
   price: {
     type: Number,
-    required: true
+    required: true,
   },
   discountPrice: {
     type: Number,
-    required: true
+    required: true,
   },
-  options: [String],
+  options: {
+    type: String,
+  },
   pack: {
     type: Boolean,
-    default: false
+    default: false,
   },
   lastUpdate: {
-    type: Date // Set the default value to the current timestamp
+    type: Date, // Set the default value to the current timestamp
   },
   creationDate: {
     type: Date, // Set the default value to the current timestamp
-  }
+  },
 });
 
 productSchema.plugin(mongoosePaginate);
 
-  
 const Product = mongoose.model("products", productSchema);
 
 module.exports = Product;
