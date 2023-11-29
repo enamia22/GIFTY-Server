@@ -1,5 +1,5 @@
 const Product = require("../models/Product");
-const SubCategory = require("../models/SubCategory");
+const Category = require("../models/Category");
 const { adminOrManager, adminOnly } = require("../middleware/authMiddleware");
 const { trackActivity } = require("../middleware/activityMiddleware");
 const mongoose = require("mongoose");
@@ -27,7 +27,7 @@ const addProduct = async (req, res) => {
       productName,
       shortDescription,
       longDescription,
-      subcategoryId,
+      categoryId,
       price,
       discountPrice,
       options,
@@ -39,7 +39,7 @@ const addProduct = async (req, res) => {
       !productName ||
       !shortDescription ||
       !longDescription ||
-      !subcategoryId ||
+      !categoryId ||
       !price ||
       !discountPrice ||
       !options
@@ -67,7 +67,7 @@ const addProduct = async (req, res) => {
       productImage: imageProduct,
       shortDescription: createProduct.shortDescription,
       longDescription: createProduct.shortDescription,
-      subcategoryId: createProduct.subcategoryId,
+      categoryId: createProduct.categoryId,
       price: createProduct.price,
       discountPrice: createProduct.discountPrice,
       options: createProduct.options,
@@ -138,10 +138,10 @@ const getAllProducts = async (req, res) => {
         try {
           const check = mongoose.Types.ObjectId.isValid(item);
           if (check) {
-            const subcategory = await SubCategory.findById(item);
-            if (subcategory) {
-              const subcategoryName = subcategory.subcategoryName;
-              return subcategoryName;
+            const category = await Category.findById(item);
+            if (category) {
+              const categoryName = category.categoryName;
+              return categoryName;
             } else {
               return null; // Handle the case where the document is not found
             }
@@ -149,7 +149,7 @@ const getAllProducts = async (req, res) => {
             return null;
           }
         } catch (error) {
-          console.error("Error while retrieving subcategory:", error);
+          console.error("Error while retrieving category:", error);
           return null; // Handle the error
         }
       }
@@ -157,7 +157,7 @@ const getAllProducts = async (req, res) => {
       async function updateArray(array) {
         const promises = array.docs.map(async (item) => ({
           ...item._doc,
-          subcategoryName: await getSubCatName(item.subcategoryId),
+          categoryName: await getSubCatName(item.categoryId),
         }));
 
         return Promise.all(promises);
@@ -204,15 +204,15 @@ const findProductById = async (req, res) => {
 
       if (product) {
         async function getSubCatName(item) {
-          const subcategory = await SubCategory.findById(item);
-          const subcategoryName = subcategory.subcategoryName;
-          return subcategoryName;
+          const category = await Category.findById(item);
+          const categoryName = category.categoryName;
+          return categoryName;
         }
 
         // Update the product object with the subcategoryName property
         const updatedProduct = {
           ...product._doc,
-          subcategoryName: await getSubCatName(product.subcategoryId),
+          categoryName: await getSubCatName(product.categoryId),
         };
 
         return res.status(200).json(updatedProduct);
@@ -253,14 +253,14 @@ const findProductByQuery = async (req, res) => {
     }
 
     async function getSubCatName(item) {
-      const subcategory = await SubCategory.findById(item);
-      const subcategoryName = subcategory.subcategoryName;
-      return subcategoryName;
+      const category = await Category.findById(item);
+      const categoryName = category.categoryName;
+      return categoryName;
     }
     async function updateArray(array) {
       const promises = array.map(async (item) => ({
         ...item._doc,
-        subcategoryName: await getSubCatName(item._doc.subcategoryId),
+        categoryName: await getSubCatName(item._doc.categoryId),
       }));
 
       return Promise.all(promises);
