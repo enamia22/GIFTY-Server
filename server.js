@@ -38,7 +38,7 @@ const userRouter = require("./routes/userRoutes");
 const categoryRouter = require("./routes/categoryRoutes");
 const orderRouter = require("./routes/orderRoutes");
 const productRouter = require("./routes/productsRoutes");
-const subcategoriesRouter = require("./routes/subcategoriesRoutes");
+// const subcategoriesRouter = require("./routes/subcategoriesRoutes");
 const customersRouter = require("./routes/customersRoutes");
 const reviewsRouter = require("./routes/reviewsRoutes")
 
@@ -48,7 +48,7 @@ app.use("/v1/users", userRouter);
 app.use("/v1/categories", categoryRouter);
 app.use("/v1/orders", orderRouter);
 app.use("/v1/products", productRouter);
-app.use("/v1/subcategories", subcategoriesRouter);
+// app.use("/v1/subcategories", subcategoriesRouter);
 app.use("/v1/customers" , customersRouter);
 app.use("/v1/reviews" , reviewsRouter);
 

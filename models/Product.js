@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const mongoosePaginate = require('mongoose-paginate-v2');
-const subcategoryModel = require('./SubCategory.js');
+const categoryModel = require('./Category.js');
 
 const productSchema = new mongoose.Schema({
   sku: {
@@ -25,9 +25,9 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  subcategoryId: {
+  categoryId: {
     type: mongoose.Schema.Types.ObjectId, 
-    ref: subcategoryModel
+    ref: categoryModel
   },
   active: {
     type: Boolean,
