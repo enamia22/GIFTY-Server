@@ -25,7 +25,7 @@ const verifyAccessToken = (accessToken) => {
     const decoded = jwt.verify(accessToken, secretKey, options);
     return decoded;
   } catch (err) {
-    return console.log(err);
+    return;
   }
 };
 
@@ -175,7 +175,8 @@ const isTokenExpired = async (req, res, next) => {
       return next();
     } catch (error) {
       // Handle errors (e.g., invalid refresh token, expired refresh token)
-      throw new Error('Refresh token has expired');
+      // throw new Error('Refresh token has expired');
+      return res.status(401).json({ message: 'Refresh token has expired' });
 
     }
   }
