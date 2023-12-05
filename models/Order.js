@@ -22,6 +22,15 @@ const orderSchema = new mongoose.Schema({
     type: String,
     default: "open"
   },
+  receiver: {
+    type: String,
+  },
+  receiverAddress: {
+    type: String,
+  },
+  phoneNumber: {
+    type: Number,
+  },
 });
 
 orderSchema.plugin(mongoosePaginate);

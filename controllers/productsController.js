@@ -134,7 +134,7 @@ const getAllProducts = async (req, res) => {
       }
 
       const result = await Product.paginate(query, options);
-      async function getSubCatName(item) {
+      async function getCatName(item) {
         try {
           const check = mongoose.Types.ObjectId.isValid(item);
           if (check) {
@@ -157,7 +157,7 @@ const getAllProducts = async (req, res) => {
       async function updateArray(array) {
         const promises = array.docs.map(async (item) => ({
           ...item._doc,
-          categoryName: await getSubCatName(item.categoryId),
+          categoryName: await getCatName(item.categoryId),
         }));
 
         return Promise.all(promises);
