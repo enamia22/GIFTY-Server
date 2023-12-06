@@ -17,6 +17,7 @@ const upload = multer({ storage: storage });
 const router = express.Router();
 router.post("/", isTokenExpired, orderController.addOrder);
 router.get("/", isTokenExpired, orderController.getAllOrders);
+router.get("/customerCards", isTokenExpired, orderController.getCustomerCards);
 router.get("/my-orders", isTokenExpired, orderController.getCustomerOrders);
 router.post("/upload-gift-card", isTokenExpired, upload.single('giftCard'), orderController.uploadGiftCard);
 router.get('/order-count', isTokenExpired,orderController.orderCount);

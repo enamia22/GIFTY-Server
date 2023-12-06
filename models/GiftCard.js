@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const customerModel = require("./Customer.js");
+const mongoosePaginate = require("mongoose-paginate-v2");
 
 const giftCardSchema = new mongoose.Schema({
   giftCard: {
@@ -18,6 +19,7 @@ const giftCardSchema = new mongoose.Schema({
   },
 });
 
+giftCardSchema.plugin(mongoosePaginate);
 
 const GiftCard = mongoose.model("giftCards", giftCardSchema);
 

@@ -453,6 +453,38 @@ const uploadGiftCard = async (req, res) => {
   }
 };
 
+const getCustomerCards = async (req, res) => {
+    
+  try {
+    if (!req.validateToken) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const customerId = new mongoose.Types.ObjectId(req.validateToken.userId);
+
+
+    const { page = 1, sort = "ASC" } = req.query;
+    const limit = 4;
+    const sortOption = sort === "DESC" ? "-_id" : "_id";
+
+    try {
+      const options = {
+        page: page,
+        // limit: limit,
+        sort: sortOption,
+      };
+
+      const result = await GiftCard.paginate({ customerId: customerId }, options);
+      console.log(result)
+      return res.status(201).json(result);
+
+    } catch (error) {
+      return res.status(500).json({ error: "Error retrieving data  from order" });
+    }
+  } catch (error) {
+    console.log("Error retrieving data from order: " + error);
+  }
+};
 
 module.exports = {
   addOrder,
@@ -462,5 +494,6 @@ module.exports = {
   orderCount,
   totalRevenueCount,
   getCustomerOrders,
-  uploadGiftCard
+  uploadGiftCard,
+  getCustomerCards
 };
