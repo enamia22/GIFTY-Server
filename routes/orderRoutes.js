@@ -20,6 +20,7 @@ router.get("/", isTokenExpired, orderController.getAllOrders);
 router.get("/customerCards", isTokenExpired, orderController.getCustomerCards);
 router.get("/my-orders", isTokenExpired, orderController.getCustomerOrders);
 router.post("/upload-gift-card", isTokenExpired, upload.single('giftCard'), orderController.uploadGiftCard);
+router.get('/get-gift-card/:imageName', isTokenExpired, orderController.getCustomerCard);
 router.get('/order-count', isTokenExpired,orderController.orderCount);
 router.get('/total-revenue',isTokenExpired, orderController.totalRevenueCount);
 router.get("/:id", isTokenExpired, orderController.getOrderById);

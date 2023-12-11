@@ -7,6 +7,7 @@ const Revenue = require("../models/Revenue");
 const GiftCard = require("../models/GiftCard");
 var fs = require('fs');
 const nodemailer = require("nodemailer");
+const path = require('path');
 
 
 const transporter = nodemailer.createTransport({
@@ -102,7 +103,7 @@ async function main(to, fullName, receiver, address, orderLink) {
 
 const addOrder = async (req, res) => {
   try {
-    let { customer_id, order_items, cart_total_price, receiver, receiverAddress, phoneNumber } = req.body;
+    let { customer_id, order_items, cart_total_price, receiver, receiverAddress, phoneNumber, cardMessage } = req.body;
     order_items = order_items.split(',');
     async function getPrice(id) {
       const product = await Product.findById(id);
@@ -129,6 +130,7 @@ const addOrder = async (req, res) => {
           phoneNumber,
           orderDate: new Date(),
           cart_total_price,
+          cardMessage,
         });
         const createdOrder = await newOrder.save();
         const customer = await Customer.findById(customer_id);
@@ -453,6 +455,12 @@ const uploadGiftCard = async (req, res) => {
   }
 };
 
+const getCustomerCard = (req, res) => {
+  const imagePath = path.join(__dirname, '../uploads/giftCards/', req.params.imageName);
+  res.sendFile(imagePath);
+};
+
+
 const getCustomerCards = async (req, res) => {
     
   try {
@@ -475,7 +483,6 @@ const getCustomerCards = async (req, res) => {
       };
 
       const result = await GiftCard.paginate({ customerId: customerId }, options);
-      console.log(result)
       return res.status(201).json(result);
 
     } catch (error) {
@@ -495,5 +502,6 @@ module.exports = {
   totalRevenueCount,
   getCustomerOrders,
   uploadGiftCard,
-  getCustomerCards
+  getCustomerCards,
+  getCustomerCard
 };

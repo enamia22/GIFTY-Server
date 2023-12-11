@@ -31,6 +31,9 @@ const orderSchema = new mongoose.Schema({
   phoneNumber: {
     type: Number,
   },
+  cardMessage:{
+    type: String
+  }
 });
 
 orderSchema.plugin(mongoosePaginate);
