@@ -33,6 +33,10 @@ const orderSchema = new mongoose.Schema({
   },
   cardMessage:{
     type: String
+  },
+  customDelivery:{
+    type: Boolean,
+    default: false
   }
 });
 
