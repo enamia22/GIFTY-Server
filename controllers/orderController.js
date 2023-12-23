@@ -103,7 +103,7 @@ async function main(to, fullName, receiver, address, orderLink) {
 
 const addOrder = async (req, res) => {
   try {
-    let { customer_id, order_items, cart_total_price, receiver, receiverAddress, phoneNumber, cardMessage } = req.body;
+    let { customer_id, order_items, cart_total_price, receiver, receiverAddress, phoneNumber, cardMessage, customDelivery } = req.body;
     order_items = order_items.split(',');
     async function getPrice(id) {
       const product = await Product.findById(id);
@@ -131,6 +131,7 @@ const addOrder = async (req, res) => {
           orderDate: new Date(),
           cart_total_price,
           cardMessage,
+          customDelivery
         });
         const createdOrder = await newOrder.save();
         const customer = await Customer.findById(customer_id);
