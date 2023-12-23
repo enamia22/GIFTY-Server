@@ -7,7 +7,7 @@ const cors = require("cors");
 const app = express();
 app.use(cookieParser());
 app.use(cors({
-  origin: ['https://delightful-boba-89763b.netlify.app', 'https://gifty-store-v2-1lryaamcn-mustapha-ettantis-projects.vercel.app'],
+  origin: ['https://delightful-boba-89763b.netlify.app', 'https://gifty-store-v2.vercel.app'],
   credentials: true,
 }));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true, parameterLimit:50000 }));
