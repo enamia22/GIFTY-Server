@@ -415,7 +415,6 @@ const totalRevenueCount = async (req, res) => {
 const uploadGiftCard = async (req, res) => {
 
   try {
-    console.log(req.validateToken);
     if (!req.validateToken) {
       return res.status(403).json({ message: "Not authorized" });
     }
