@@ -7,7 +7,7 @@ const cors = require("cors");
 const app = express();
 app.use(cookieParser());
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173'],
+  origin: ['http://localhost:3000', 'https://gifty-store-v2-1lryaamcn-mustapha-ettantis-projects.vercel.app'],
   credentials: true,
 }));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true, parameterLimit:50000 }));
