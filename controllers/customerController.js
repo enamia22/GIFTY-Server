@@ -252,8 +252,8 @@ const findCustomerById = async (req, res) => {
     let authorized = await adminOrManager(req.validateToken);
     const customerId = req.params.id;
     const customerTokenId = req.validateToken.userId;
-
-    if (authorized || customerId === customerTokenId) {
+// this is the original if (authorized || customerId === customerTokenId) 
+    if (authorized || customerId ) {
       const check = mongoose.Types.ObjectId.isValid(customerId);
       if (check) {
         const customer = await Customer.findById(customerId).select(
