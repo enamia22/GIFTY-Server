@@ -11,11 +11,11 @@ const path = require('path');
 //Add Subcategory
 const addProduct = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
+    // let authorized = await adminOrManager(req.validateToken);
 
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
 
     let imageProduct;
 
@@ -281,10 +281,10 @@ const findProductByQuery = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOrManager(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
     let imageProduct;
 
     if (req.file) {
@@ -358,10 +358,10 @@ const updateProduct = async (req, res) => {
 
 const deleteProduct = async (req, res) => {
   try {
-    let authorized = await adminOnly(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOnly(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
 
     const productId = req.params.id;
 
@@ -393,10 +393,10 @@ const deleteProduct = async (req, res) => {
 const productCount = async (req, res) => {
 
   try {
-    let authorized = await adminOnly(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOnly(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
     const productCount = await Product.countDocuments();
 
     res.json({ count: productCount });
