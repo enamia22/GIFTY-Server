@@ -197,10 +197,10 @@ const loginCustomer = async (req, res) => {
 //get Customers
 const getAllCustomers = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOrManager(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
     const { page = 1, sort = "ASC" } = req.query;
     const limit = 4;
     const sortOption = sort === "DESC" ? "-_id" : "_id";
@@ -226,10 +226,10 @@ const getAllCustomers = async (req, res) => {
 //search for a Customer By query
 const findCustomerByQuery = async (req, res) => {
   try {
-    let authorized = adminOrManager(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = adminOrManager(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
 
     const query = req.query.query;
 
@@ -283,9 +283,9 @@ const updateCustomer = async (req, res) => {
     const customerId = req.params.id;
     const customerTokenId = req.validateToken.userId;
 
-    if (!authorized && customerTokenId !== customerId) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // if (!authorized && customerTokenId !== customerId) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
 
     const customerUpdated = req.body;
     const check = mongoose.Types.ObjectId.isValid(customerId);
@@ -334,10 +334,10 @@ const updateCustomer = async (req, res) => {
 //delete costumers
 const deleteCustomer = async (req, res) => {
   try {
-    let authorized = await adminOnly(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOnly(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
 
     const customerId = req.params.id;
 
@@ -424,10 +424,10 @@ const logout = async (req, res) => {
 const customerCount = async (req, res) => {
 
   try {
-    let authorized = await adminOnly(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOnly(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
     const customerCount = await Customer.countDocuments();
     const customerMonthsCount = await Customer.aggregate([
       {
