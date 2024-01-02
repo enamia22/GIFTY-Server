@@ -150,10 +150,10 @@ const addOrder = async (req, res) => {
 
 const getAllOrders = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOrManager(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
 
     const { page = 1, sort = "ASC" } = req.query;
     const limit = 4;
@@ -341,10 +341,10 @@ const getOrderById = async (req, res) => {
 
 const updateOrder = async (req, res) => {
   try {
-    let authorized = await adminOrManager(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOrManager(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
 
     const orderId = req.params.id;
     const { status } = req.body;
@@ -384,10 +384,10 @@ const updateOrder = async (req, res) => {
 const orderCount = async (req, res) => {
 
   try {
-    let authorized = await adminOnly(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOnly(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
     const orderCount = await Order.countDocuments();
 
     res.json({ count: orderCount });
@@ -399,10 +399,10 @@ const orderCount = async (req, res) => {
 const totalRevenueCount = async (req, res) => {
 
   try {
-    let authorized = await adminOnly(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOnly(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
     const revenue = await Revenue.findOne();
 
     res.json({ revenue: revenue.total });
