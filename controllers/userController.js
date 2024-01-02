@@ -11,10 +11,10 @@ const { trackActivity } = require("../middleware/activityMiddleware");
 //Add User
 const addUser = async (req, res) => {
   try {
-    let authorized = await adminOnly(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOnly(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
     let { firstName, lastName, username, email, password, role, active } =
       req.body;
 
@@ -117,10 +117,10 @@ const loginUser = async (req, res) => {
 //get users
 const getAllUsers = async (req, res) => {
   try {
-    let authorized = await adminOnly(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOnly(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
 
     const { page = 1, sort = "ASC" } = req.query;
     const limit = 4;
@@ -148,10 +148,10 @@ const getAllUsers = async (req, res) => {
 
 const findUserById = async (req, res) => {
   try {
-    let authorized = await adminOnly(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOnly(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
     const userId = req.params.id;
     const check = mongoose.Types.ObjectId.isValid(userId);
     if (check) {
@@ -172,10 +172,10 @@ const findUserById = async (req, res) => {
 
 const findUserByQuery = async (req, res) => {
   try {
-    let authorized = adminOnly(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = adminOnly(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
     const query = req.query.query;
 
     const results = await User.find({
@@ -190,10 +190,10 @@ const findUserByQuery = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    let authorized = await adminOnly(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOnly(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
     const userId = req.params.id;
     const userUpdated = req.body;
     if (userUpdated.password) {
@@ -251,10 +251,10 @@ const updateUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
-    let authorized = await adminOnly(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOnly(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
 
     const userId = req.params.id;
 
@@ -326,10 +326,10 @@ const logout = async (req, res) => {
 const userCount = async (req, res) => {
 
   try {
-    let authorized = await adminOnly(req.validateToken);
-    if (!authorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // let authorized = await adminOnly(req.validateToken);
+    // if (!authorized) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
     const userCount = await User.countDocuments();
 
     res.json({ count: userCount });
